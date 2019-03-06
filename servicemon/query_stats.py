@@ -1,5 +1,5 @@
 import time
-import csv
+
 
 class Interval():
     """
@@ -29,10 +29,11 @@ class Interval():
     def end_time(self):
         return self._end_time
 
+
 class QueryStats():
     """
     """
-    def __init__(self, name, base_name, query_type, access_url, query_params, 
+    def __init__(self, name, base_name, query_type, access_url, query_params,
                  result_meta_fields, max_intervals=2):
 
         # First save the params needed to define the result structure.
@@ -53,11 +54,11 @@ class QueryStats():
         self._intervals = []
         self._result_meta = {}
 
-
     def add_interval(self, interval):
         lint = len(self._intervals)
         if lint > self._max_intervals:
-            raise ValueError(f'Too many intervals added ({self._max_intervals + 1})')
+            raise ValueError(
+                f'Too many intervals added ({self._max_intervals + 1})')
 
         if lint == 0:
             self._vals['start_time'] = time.time()
@@ -108,45 +109,3 @@ class QueryStats():
             else:
                 p['other_params'][key] = in_p[key]
         return p
-
-
-
-if __name__ == '__main__':
-    o = {}
-    o['me'] = 'value'
-    print(csv.list_dialects())
-    with open('employee_file.csv', mode='w') as employee_file:
-        fieldnames = ['Name', 'Department', 'Month']
-        employee_writer = csv.DictWriter(employee_file, dialect='excel', fieldnames=fieldnames)
-        employee_writer.writeheader()
-        employee_writer.writerow({
-            'Name': 'John Smith',
-            'Department': 'Accounting',
-            'Month': 'November'
-        })
-        employee_writer.writerow({
-            'Name': 'John, Smith',
-            'Department': 'Accounting',
-            'Month': 'November'
-        })
-        employee_writer.writerow({
-            'Name': 'John, "Smith"',
-            'Department': 'Accounting',
-            'Month': 'November'
-        })
-        employee_writer.writerow({
-            'Name': 'John, "Smith"',
-            'Department': 'Accounting',
-            'Month': {
-                'January': 'Yes,Maybe',
-                'February': 'No'
-            }
-        })
-        employee_writer.writerow({
-            'Name': 'John, "Smith"',
-            'Department': 'Accounting',
-            'Month': {
-                'January': 'Yes',
-                'February': 'No'
-            }
-        })
