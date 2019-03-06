@@ -5,10 +5,10 @@ class Interval():
     """
     """
     def __init__(self, desc):
-        self._desc = desc 
+        self._desc = desc
         self._start_time = time.time()
         self._end_time = self._start_time
-        
+
     def close(self):
         self._end_time = time.time()
         return self
@@ -20,56 +20,65 @@ class Interval():
     @property
     def duration(self):
         return self._end_time - self._start_time
-    
+
+    @property
+    def start_time(self):
+        return self._start_time
+
+    @property
+    def end_time(self):
+        return self._end_time
+
 class QueryStats():
     """
     """
-    def __init__(self, name, base_name, query_type, access_url, query_params, result_meta_fields, max_intervals=2):
+    def __init__(self, name, base_name, query_type, access_url, query_params, 
+                 result_meta_fields, max_intervals=2):
 
         # First save the params needed to define the result structure.
         self._query_params = self._organize_params(query_params)
         self._result_meta_fields = result_meta_fields
         self._max_intervals = max_intervals
-        
+
         self._vals = dict.fromkeys(self.columns())
-        
+
         self._vals['name'] = name
         self._vals['base_name'] = base_name
         self._vals['query_type'] = query_type
         self._vals['access_url'] = access_url
-        
+
         self._query_params = self._organize_params(query_params)
         self._vals.update(self._query_params)  # Add the query_params values.
-        
+
         self._intervals = []
         self._result_meta = {}
-        
-        
+
+
     def add_interval(self, interval):
         lint = len(self._intervals)
         if lint > self._max_intervals:
-            raise(ValueError(f'Too many intervals added ({self._max_intervals + 1})'))
-        
+            raise ValueError(f'Too many intervals added ({self._max_intervals + 1})')
+
         if lint == 0:
             self._vals['start_time'] = time.time()
-        self._vals['end_time'] = interval._end_time
-        
+        self._vals['end_time'] = interval.end_time
+
         self._vals[f'int{lint}_desc'] = interval.desc
-        self._vals[f'int{lint}_end_time'] = interval.duration
-        
+        self._vals[f'int{lint}_duration'] = interval.duration
+
         self._intervals.append(interval)
-        
+
     # property result metadata
     @property
     def result_meta(self):
         return self._result_meta
-    
+
     @result_meta.setter
     def result_meta(self, value):
         self._result_meta = value
         for key in self._result_meta_fields:
-            self._vals[key] - value.get(key)
-        
+            self._vals[key] = value.get(key)
+
     def columns(self):
         cols = ['name', 'start_time', 'end_time']
         for i in range(0, self._max_intervals):
@@ -85,10 +94,10 @@ class QueryStats():
         cols.append('access_url')
         cols.extend(list(self._result_meta.keys()))
         return cols
-    
+
     def row_values(self):
         return self._vals
-    
+
     def _organize_params(self, in_p):
         fixed_keys = ('ra', 'dec', 'sr', 'adql')
         p = dict.fromkeys(fixed_keys)
@@ -102,7 +111,7 @@ class QueryStats():
 
 
 
-if __name__ == '__main__':   
+if __name__ == '__main__':
     o = {}
     o['me'] = 'value'
     print(csv.list_dialects())
