@@ -1,15 +1,15 @@
 include README.rst
-include CHANGES.rst
+#include CHANGES.rst
 
 include ah_bootstrap.py
 include setup.cfg
 include servicemon/tests/coveragerc
 
-recursive-include servicemon *.pyx *.c *.pxd
+#recursive-include servicemon *.pyx *.c *.pxd
 recursive-include docs *
 recursive-include licenses *
-recursive-include cextern *
-recursive-include scripts *
+#recursive-include cextern *
+#recursive-include scripts *
 
 prune build
 prune docs/_build

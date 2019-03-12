@@ -40,6 +40,7 @@ class QueryStats():
         self._query_params = self._organize_params(query_params)
         self._result_meta_fields = result_meta_fields
         self._max_intervals = max_intervals
+        self._result_meta = dict.fromkeys(result_meta_fields)
 
         self._vals = dict.fromkeys(self.columns())
 
@@ -50,9 +51,9 @@ class QueryStats():
 
         self._query_params = self._organize_params(query_params)
         self._vals.update(self._query_params)  # Add the query_params values.
+        self._vals.update(self._result_meta)  # Add the result metadata values.
 
         self._intervals = []
-        self._result_meta = {}
 
     def add_interval(self, interval):
         lint = len(self._intervals)
@@ -87,20 +88,20 @@ class QueryStats():
             cols.append(f'int{i}_duration')
         cols.append('base_name')
         cols.append('query_type')
-        cols.append('ra')
-        cols.append('dec')
-        cols.append('sr')
-        cols.append('adql')
+        cols.append('RA')
+        cols.append('DEC')
+        cols.append('SR')
+        cols.append('ADQL')
         cols.append('other_params')
         cols.append('access_url')
-        cols.extend(list(self._result_meta.keys()))
+        cols.extend(list(self.result_meta.keys()))
         return cols
 
     def row_values(self):
         return self._vals
 
     def _organize_params(self, in_p):
-        fixed_keys = ('ra', 'dec', 'sr', 'adql')
+        fixed_keys = ('RA', 'DEC', 'SR', 'ADQL')
         p = dict.fromkeys(fixed_keys)
         p['other_params'] = {}
         for key in in_p.keys():
