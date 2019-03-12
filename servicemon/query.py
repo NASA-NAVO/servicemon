@@ -1,6 +1,7 @@
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astroquery.utils import parse_coordinates
+from astroquery.utils.tap.core import Tap
 
 import warnings
 
@@ -44,7 +45,7 @@ class Query():
         self._orig_coords = coords
         self._orig_radius = radius
         self._coords = self._compute_coords()
-        self._radius = radius
+        self._adql = self._compute_adql()
 
         self._out_path = pathlib.Path(out_dir)
         self._verbose = verbose
@@ -61,15 +62,38 @@ class Query():
         return self._stats
 
     def run(self):
-        response = self.do_query()
-        self.stream_to_file(response)
-        self.gather_response_metadata(response)
+        if self._service_type == 'cone':
+            response = self.do_query()
+            self.stream_to_file(response)
+            self.gather_response_metadata(response)
+        elif self._service_type == 'tap':
+            tap_service = Tap(url=self._access_url)
+            job = self.do_tap_query(tap_service)
+            
+            # Adapted from job.__load_async_job_results() and utils.read_http_response()
+            # TBD: Loses the part of utils.read_http_response() that corrects units.
+            subContext = "async/" + str(job.jobid) + "/results/result"
+            resultsResponse = job.connHandler.execute_get(subContext) 
+            
+            self.stream_tap_to_file(resultsResponse)      
 
+    @time_this('do_query')
+    def do_tap_query(self, tap_service):
+        job = tap_service.launch_job_async(self._adql, background=True)
+        job.wait_for_job_end()
+        return job
+    
     @time_this('do_query')
     def do_query(self):
         response = requests.get(self._access_url, self._query_params, stream=True)
         return response
 
+    @time_this('stream_to_file')
+    def stream_tap_to_file(self, response):
+        result_content = response.read()
+        with open(self._filename, 'wb+') as fd:
+            fd.write(result_content)
+                
     @time_this('stream_to_file')
     def stream_to_file(self, response):
         with open(self._filename, 'wb+') as fd:
@@ -124,6 +148,10 @@ class Query():
 
         return coords
 
+    def _compute_adql(self):
+        adql_base = self.getval(self._service, 'adql', '')
+        self._adql = adql_base.format(self._coords.ra.deg, self._coords.dec.deg, self._orig_radius)
+        
     def _compute_query_params(self):
         params = {
             'RA': self._coords.ra.deg,
