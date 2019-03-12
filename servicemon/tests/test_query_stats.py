@@ -8,11 +8,11 @@ def test_interval():
     i.close()
     assert i.desc == 'MyInterval'
     assert 0.0 < i.duration < 0.1
-    
-    
+
+
 def test_params():
-    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone', 'http://google.com', 
-                    {'RA': 123.4, 'DEC':56.7, 'SR': 8.9}, 
+    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone', 'http://google.com',
+                    {'RA': 123.4, 'DEC':56.7, 'SR': 8.9},
                     {'meta1': 14, 'meta2': 'important data'})
     rv = qs.row_values()
     assert rv['RA'] == 123.4
@@ -27,27 +27,22 @@ def test_params():
     assert 'int2_desc' not in qs.columns()
     assert 'meta1' in qs.columns()
     assert 'meta2' in qs.columns()
-    
-    qs = QueryStats('Pan-STARRS_random_tap', 'Pan-STARRS_', 'tap', 'http://google.com', 
-                    {'ADQL': 'select cool_stuff from some_table'}, 
+
+    qs = QueryStats('Pan-STARRS_random_tap', 'Pan-STARRS_', 'tap', 'http://google.com',
+                    {'ADQL': 'select cool_stuff from some_table'},
                     {'meta1': 14, 'meta2': 'important data', 'meta3': 42}, max_intervals=3)
     rv = qs.row_values()
     assert rv['RA'] == None
     assert rv['DEC'] == None
     assert rv['SR'] == None
     assert rv['ADQL'] == 'select cool_stuff from some_table'
-    assert rv['other_params'] == {}    
+    assert rv['other_params'] == {}
     assert 'int2_desc' in qs.columns()
     assert 'int2_duration' in qs.columns()
     assert 'meta3' in qs.columns()
 
-    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone', 'http://google.com', 
-                    {'RA': 123.4, 'DEC':56.7, 'SR': 8.9, 'verbose': 3}, 
-                    {'meta1': 14, 'meta2': 'important data'}) 
+    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone', 'http://google.com',
+                    {'RA': 123.4, 'DEC':56.7, 'SR': 8.9, 'verbose': 3},
+                    {'meta1': 14, 'meta2': 'important data'})
     rv = qs.row_values()
     assert rv['other_params']['verbose'] == 3
-    
-    
-
-if __name__ == '__main__':
-    test_params()
