@@ -1,4 +1,8 @@
 import numpy as np
+import os
+import sys
+import pprint
+
 from numpy.random import random_sample as rand
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -53,8 +57,33 @@ class Cone:
         if not (0 <= min_radius < max_radius):
             raise ValueError('min-radius must be in the range [0,max_radius).')
         if num_points <= 0:
-            raise ValueError('num_point must be a positive number.')
+            raise ValueError('num_points must be a positive number.')
 
-        for i in range(num_points):
-            cone = Cone.random_cone(min_radius, max_radius)
-            yield cone
+        def cones(num_points, min_radius, max_radius):
+            for i in range(num_points):
+                cone = Cone.random_cone(min_radius, max_radius)
+                yield cone
+
+        return cones(num_points, min_radius, max_radius)
+
+    @staticmethod
+    def write_random(num_points, min_radius, max_radius, filename=None):
+        generator = Cone.generate_random(num_points, min_radius, max_radius)
+
+        stream = sys.stdout
+        if filename is not None:
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            stream = open(filename, "w", encoding="utf-8")
+
+        pp = pprint.PrettyPrinter(width=100, stream=stream, compact=True)
+        stream.write("[")
+        sep = ''
+        indent = '    '
+        for cone in generator:
+            s = pp.pformat(cone)
+            stream.write(f'{sep}\n{indent}{s}')
+            sep = ','
+        stream.write("\n]\n")
+
+        if filename is not None:
+            stream.close()

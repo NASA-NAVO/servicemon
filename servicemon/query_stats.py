@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 
 
 class Interval():
@@ -33,7 +34,7 @@ class Interval():
 class QueryStats():
     """
     """
-    def __init__(self, name, base_name, query_type, access_url, query_params,
+    def __init__(self, name, base_name, service_type, access_url, query_params,
                  result_meta_fields, max_intervals=2):
 
         # First save the params needed to define the result structure.
@@ -46,7 +47,7 @@ class QueryStats():
 
         self._vals['name'] = name
         self._vals['base_name'] = base_name
-        self._vals['query_type'] = query_type
+        self._vals['service_type'] = service_type
         self._vals['access_url'] = access_url
 
         self._query_params = self._organize_params(query_params)
@@ -62,8 +63,10 @@ class QueryStats():
                 f'Too many intervals added ({self._max_intervals + 1})')
 
         if lint == 0:
-            self._vals['start_time'] = time.time()
-        self._vals['end_time'] = interval.end_time
+            now = datetime.fromtimestamp(time.time())  # now = datetime.now()
+            self._vals['start_time'] = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+        end = datetime.fromtimestamp(interval.end_time)
+        self._vals['end_time'] = end.strftime('%Y-%m-%d-%H:%M:%S.%f')
 
         self._vals[f'int{lint}_desc'] = interval.desc
         self._vals[f'int{lint}_duration'] = interval.duration
@@ -87,7 +90,7 @@ class QueryStats():
             cols.append(f'int{i}_desc')
             cols.append(f'int{i}_duration')
         cols.append('base_name')
-        cols.append('query_type')
+        cols.append('service_type')
         cols.append('RA')
         cols.append('DEC')
         cols.append('SR')
@@ -102,7 +105,7 @@ class QueryStats():
 
     def _organize_params(self, in_p):
         fixed_keys = ('RA', 'DEC', 'SR', 'ADQL')
-        p = dict.fromkeys(fixed_keys)
+        p = dict.fromkeys(fixed_keys, '')
         p['other_params'] = {}
         for key in in_p.keys():
             if key in fixed_keys:

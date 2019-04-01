@@ -1,13 +1,11 @@
+from datetime import datetime
 import sys
-import json
+import ast
 import csv
+import os
+
+from astropy.table import Table
 from query import Query
-
-
-def from_json_file(source):
-    with open(source, 'rb', encoding='utf-8') as data_file:
-        data = json.loads(data_file.read())
-    return data
 
 
 def from_table_file(source):
@@ -21,13 +19,17 @@ class QueryRunner():
     _first_stat = True
     stats = []
 
-    def __init__(self, services, cones, results_dir='.', stats_path=None):
+    def __init__(self, services, cones, results_dir='.', stats_path=None, verbose=True):
         """
         """
-        self._services = services
-        self._cones = cones
+        self._services = self._read_if_file(services)
+        self._cones = self._read_if_file(cones)
         self._results_dir = results_dir
         self._stats_path = stats_path
+        self._verbose = verbose
+
+        if self._stats_path is not None:
+            os.makedirs(os.path.dirname(self._stats_path), exist_ok=True)
 
     def run(self):
         """
@@ -38,15 +40,19 @@ class QueryRunner():
             self._run_services_only()
 
     def _run_with_cones(self):
-        # print(f'Error handling query: {e}', file=sys.stderr, flush=True)
-        for service in self._services:
-            for cone in self._cones:
-                query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir)
+
+        for cone in self._cones:
+            for service in self._services:
+                query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir,
+                              verbose=self._verbose)
                 query.run()
                 self._collect_stats(query.stats)
 
     def _run_services_only(self):
-        pass
+        for service in self._services:
+            query = Query(service, None, None, self._results_dir)
+            query.run()
+            self._collect_stats(query.stats)
 
     def _collect_stats(self, stats):
         self.stats.append(stats)
@@ -65,3 +71,30 @@ class QueryRunner():
             self._first_stat = False
             writer.writeheader()
         writer.writerow(stats.row_values())
+
+    def _read_if_file(self, obj):
+        val = obj
+        if isinstance(obj, str):
+            # Read from file
+            if obj.endswith('.py'):
+                # read as Python literal, then into Table
+                with open(obj, 'r') as f:
+                    data = ast.literal_eval(f.read())
+                val = Table(rows=data)
+            else:
+                # assume csv and read into Table
+                val = Table.read(obj, format='ascii.csv')
+        return val
+
+
+def cone_test():
+    now = datetime.now()
+    stats_path = 'stats/newstats_' + now.strftime('%Y-%m-%d-%H:%M:%S.%f') + '.csv'
+    qr = QueryRunner('data/services.py', 'data/cones.py', results_dir='results',
+                     stats_path=stats_path)
+    qr.run()
+
+
+if __name__ == '__main__':
+
+    cone_test()

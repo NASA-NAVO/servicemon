@@ -1,15 +1,14 @@
-from astropy.coordinates import SkyCoord
-from astropy.table import Table
-from astroquery.utils import parse_coordinates
-from astroquery.utils.tap.core import Tap
-
-import warnings
-
 import html
 import requests
 import os
 import sys
 import pathlib
+import warnings
+
+from astropy.coordinates import SkyCoord
+from astropy.table import Table
+from astroquery.utils import parse_coordinates
+from astroquery.utils.tap.core import Tap
 
 from query_stats import Interval, QueryStats
 
@@ -36,25 +35,29 @@ class Query():
     """
     """
 
-    def __init__(self, service, coords, radius, out_dir, verbose=False):
+    def __init__(self, service, coords, radius, out_dir, use_subdir=True, verbose=False):
         self._service = service
         self._base_name = self._compute_base_name()
         self._service_type = self._compute_service_type()
         self._access_url = self._compute_access_url()
+        self._use_subdir = use_subdir
 
         self._orig_coords = coords
         self._orig_radius = radius
         self._coords = self._compute_coords()
         self._adql = self._compute_adql()
 
-        self._out_path = pathlib.Path(out_dir)
+        if self._use_subdir:
+            self._out_path = pathlib.Path(f'{out_dir}/{self._base_name}')
+        else:
+            self._out_path = pathlib.Path(out_dir)
         self._verbose = verbose
 
         self._query_params = self._compute_query_params()
         self._query_name = self._compute_query_name()
         self._filename = self._out_path / (self._query_name + '.xml')
 
-        self._stats = QueryStats(self._query_name, self._base_name, 'cone',
+        self._stats = QueryStats(self._query_name, self._base_name, self._service_type,
                                  self._access_url, self._query_params, self._result_meta_attrs())
 
     @property
@@ -65,24 +68,24 @@ class Query():
         if self._service_type == 'cone':
             response = self.do_query()
             self.stream_to_file(response)
-            self.gather_response_metadata(response)
         elif self._service_type == 'tap':
             tap_service = Tap(url=self._access_url)
             job = self.do_tap_query(tap_service)
-            
+
             # Adapted from job.__load_async_job_results() and utils.read_http_response()
             # TBD: Loses the part of utils.read_http_response() that corrects units.
             subContext = "async/" + str(job.jobid) + "/results/result"
-            resultsResponse = job.connHandler.execute_get(subContext) 
-            
-            self.stream_tap_to_file(resultsResponse)      
+            response = job.connHandler.execute_get(subContext)
+            self.stream_tap_to_file(response)
+
+        self.gather_response_metadata(response)
 
     @time_this('do_query')
     def do_tap_query(self, tap_service):
         job = tap_service.launch_job_async(self._adql, background=True)
         job.wait_for_job_end()
         return job
-    
+
     @time_this('do_query')
     def do_query(self):
         response = requests.get(self._access_url, self._query_params, stream=True)
@@ -91,11 +94,13 @@ class Query():
     @time_this('stream_to_file')
     def stream_tap_to_file(self, response):
         result_content = response.read()
+        os.makedirs(os.path.dirname(self._filename), exist_ok=True)
         with open(self._filename, 'wb+') as fd:
             fd.write(result_content)
-                
+
     @time_this('stream_to_file')
     def stream_to_file(self, response):
+        os.makedirs(os.path.dirname(self._filename), exist_ok=True)
         with open(self._filename, 'wb+') as fd:
             for chunk in response.iter_content(chunk_size=128):
                 fd.write(chunk)
@@ -104,8 +109,15 @@ class Query():
         return ['status', 'size', 'num_rows', 'num_columns']
 
     def gather_response_metadata(self, response):
+        """
+        response:  Either an http.client.HTTPResponse or a yyy
+        """
         result_meta = dict.fromkeys(self._result_meta_attrs())
-        result_meta['status'] = response.status_code
+
+        if self._service_type == 'cone':
+            result_meta['status'] = response.status_code
+        elif self._service_type == 'tap':
+            result_meta['status'] = response.status
 
         try:
             with warnings.catch_warnings():
@@ -116,7 +128,7 @@ class Query():
             result_meta['num_rows'] = len(t)
             result_meta['num_columns'] = len(t.columns)
         except Exception as e:
-            print(value=f'Error reading result table: {e}', file=sys.stderr, flush=True)
+            print(f'Error reading result table: {e}', file=sys.stderr, flush=True)
         finally:
             self._stats.result_meta = result_meta
 
@@ -139,36 +151,71 @@ class Query():
         # Get the RA and Dec from in_coords.
         in_coords = self._orig_coords
         coords = in_coords
-        if (type(in_coords) is tuple or type(in_coords) is list) and len(in_coords) == 2:
-            coords = SkyCoord(in_coords[0], in_coords[1], frame="icrs", unit="deg")
-        elif type(in_coords) is str:
-            coords = parse_coordinates(in_coords)
-        elif type(in_coords) is not SkyCoord:
-            raise ValueError(f"Cannot parse input coordinates {in_coords}")
+        if in_coords is not None:
+            if (type(in_coords) is tuple or type(in_coords) is list) and len(in_coords) == 2:
+                coords = SkyCoord(in_coords[0], in_coords[1], frame="icrs", unit="deg")
+            elif type(in_coords) is str:
+                coords = parse_coordinates(in_coords)
+            elif type(in_coords) is not SkyCoord:
+                raise ValueError(f"Cannot parse input coordinates {in_coords}")
 
         return coords
 
     def _compute_adql(self):
-        adql_base = self.getval(self._service, 'adql', '')
-        self._adql = adql_base.format(self._coords.ra.deg, self._coords.dec.deg, self._orig_radius)
-        
+        adql = self.getval(self._service, 'adql', '')
+        if self._coords is not None:
+            adql = adql.format(self._coords.ra.deg, self._coords.dec.deg, self._orig_radius)
+        return adql
+
     def _compute_query_params(self):
-        params = {
-            'RA': self._coords.ra.deg,
-            'DEC': self._coords.dec.deg,
-            'SR': self._orig_radius
-        }
+        params = {}
+        if self._coords is not None:
+            params.update({
+                'RA': self._coords.ra.deg,
+                'DEC': self._coords.dec.deg,
+                'SR': self._orig_radius
+            })
+        else:
+            ra = self.getval(self._service, 'RA', None)
+            dec = self.getval(self._service, 'DEC', None)
+            sr = self.getval(self._service, 'SR', None)
+            if ra is not None and dec is not None and sr is not None:
+                params.update({
+                    'RA': ra,
+                    'DEC': dec,
+                    'SR': sr
+                })
+
+        if self._service_type == 'tap':
+            params['ADQL'] = self.fix_white(self._adql)
+
         return params
 
     def _compute_query_name(self):
-        name = (f'{self._base_name}_{self._service_type}' +
-                f'_{str(self._query_params["RA"])}' +
-                f'_{str(self._query_params["DEC"])}' +
-                f'_{str(self._query_params["SR"])}')
+        name = f'{self._base_name}_{self._service_type}'
+        ra = self._query_params.get('RA')
+        dec = self._query_params.get('DEC')
+        sr = self._query_params.get('SR')
+        if ra is not None and dec is not None and sr is not None:
+            name += f'_{ra}_{dec}_{sr}'
+
         return name
 
-    def getval(self, obj, key, default=None):
+    def getval_old(self, obj, key, default=None):
         val = getattr(obj, key, None)
         if val is None:
             val = obj.get(key, default)
         return val
+
+    def getval(self, obj, key, default=None):
+        val = getattr(obj, key, None)
+        if val is None:
+            try:
+                val = obj[key]
+            except KeyError:
+                val = default
+        return val
+
+    def fix_white(self, s):
+        fixed = " ".join(s.split())
+        return fixed

@@ -18,7 +18,7 @@ def test_params():
     assert rv['RA'] == 123.4
     assert rv['DEC'] == 56.7
     assert rv['SR'] == 8.9
-    assert rv['ADQL'] is None
+    assert rv['ADQL'] == ''
     assert rv['other_params'] == {}
     assert 'int0_desc' in qs.columns()
     assert 'int1_duration' in qs.columns()
@@ -32,9 +32,9 @@ def test_params():
                     {'ADQL': 'select cool_stuff from some_table'},
                     {'meta1': 14, 'meta2': 'important data', 'meta3': 42}, max_intervals=3)
     rv = qs.row_values()
-    assert rv['RA'] == None
-    assert rv['DEC'] == None
-    assert rv['SR'] == None
+    assert rv['RA'] == ''
+    assert rv['DEC'] == ''
+    assert rv['SR'] == ''
     assert rv['ADQL'] == 'select cool_stuff from some_table'
     assert rv['other_params'] == {}
     assert 'int2_desc' in qs.columns()
