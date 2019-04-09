@@ -19,13 +19,15 @@ class QueryRunner():
     _first_stat = True
     stats = []
 
-    def __init__(self, services, cones, results_dir='.', stats_path=None, verbose=True):
+    def __init__(self, services, cones, results_dir='.', stats_path=None,
+                 starting_cone=0, verbose=True):
         """
         """
         self._services = self._read_if_file(services)
         self._cones = self._read_if_file(cones)
         self._results_dir = results_dir
         self._stats_path = stats_path
+        self._starting_cone = int(starting_cone)
         self._verbose = verbose
 
         if self._stats_path is not None:
@@ -40,13 +42,15 @@ class QueryRunner():
             self._run_services_only()
 
     def _run_with_cones(self):
-
+        cone_index = 0
         for cone in self._cones:
-            for service in self._services:
-                query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir,
-                              verbose=self._verbose)
-                query.run()
-                self._collect_stats(query.stats)
+            if cone_index >= self._starting_cone:
+                for service in self._services:
+                    query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir,
+                                  verbose=self._verbose)
+                    query.run()
+                    self._collect_stats(query.stats)
+            cone_index += 1
 
     def _run_services_only(self):
         for service in self._services:

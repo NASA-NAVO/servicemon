@@ -128,7 +128,8 @@ class Query():
             result_meta['num_rows'] = len(t)
             result_meta['num_columns'] = len(t.columns)
         except Exception as e:
-            print(f'Error reading result table: {e}', file=sys.stderr, flush=True)
+            print(f'In {self._query_name}, error reading result table: {e}',
+                  file=sys.stderr, flush=True)
         finally:
             self._stats.result_meta = result_meta
 

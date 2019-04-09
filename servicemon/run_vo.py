@@ -1,4 +1,5 @@
 import sys
+import getopt
 from datetime import datetime
 from query_runner import QueryRunner
 from cone import Cone
@@ -9,6 +10,24 @@ def compute_stats_path(base_stats_name):
     dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
     stats_path = f'stats/{base_stats_name}_{dtstr}.csv'
     return stats_path
+
+
+def run_ipac_tap():
+    stats_path = compute_stats_path('2mass_ipac')
+    services = [
+        {'base_name': '2MASS_IPAC',
+         'service_type': 'tap',
+         'access_url': 'https://irsa.ipac.caltech.edu/TAP',
+         'adql':'''
+        SELECT ra, dec, j_m, h_m, k_m FROM fp_psc
+        WHERE CONTAINS(POINT('ICRS',ra, dec),
+        CIRCLE('J2000',{},{},{}))=1
+         '''
+         }
+    ]
+    qr = QueryRunner(services, 'data/cones.py', results_dir='results',
+                     stats_path=stats_path, starting_cone=1)
+    qr.run()
 
 
 def vo_test_fixed_cones():
@@ -46,20 +65,59 @@ def replay(filename):
     qr = QueryRunner(filename, None, results_dir='results',
                      stats_path=stats_path)
     qr.run()
-    
-def run_from_files(base_name, service_file, cone_file):
+
+
+def run_from_files(base_name, service_file, cone_file, starting_cone):
     stats_path = compute_stats_path(base_name)
     qr = QueryRunner(service_file, cone_file, results_dir='results',
-                     stats_path=stats_path)
+                     stats_path=stats_path, starting_cone=starting_cone)
     qr.run()
-    
+
+
 def run_with_cone_gen(base_name, service_file, num_cones, min_radius, max_radius):
     stats_path = compute_stats_path(base_name)
     random_cones = Cone.generate_random(num_cones, min_radius, max_radius)
-    qr = QueryRunner(service_file, cone_file, results_dir='results',
+    qr = QueryRunner(service_file, random_cones, results_dir='results',
                      stats_path=stats_path)
     qr.run()
-    
+
+
+def usage():
+        print("""
+Usage:
+   python run_vo.py <base_name> <service_file> file <cone_file> <starting_cone>
+or
+   python run_vo.py <base_name> <service_file> <num_cones> <min_radius> <max_radius>
+or
+   python run_vo.py replay <file>
+        """)
+
+
+def run_cli(argv):
+    try:
+        opts, args = getopt.getopt(argv, 'h', ['help'])
+    except getopt.GetoptError as e:
+        print(e)
+        usage()
+        sys.exit(2)
+
+    for opt, arg in opts:
+        if opt == '-h' or opt == '--help':
+            usage()
+            sys.exit(0)
+
+    if len(args) != 2 and len(args) != 5:
+        usage()
+        sys.exit(2)
+
+    if args[0] == 'replay':
+        replay(args[1])
+    elif args[2] == 'file':
+        run_from_files(args[0], args[1], args[3], args[4])
+    else:
+        run_with_cone_gen(args[0], args[1], args[2],
+                          args[3], args[4])
+
 
 if __name__ == '__main__':
 
@@ -69,22 +127,6 @@ if __name__ == '__main__':
     twomass_random(1)
     sample_random(1)
     replay('stats/twomass_random_2019-03-31-22:56:46.160591.csv')
+    run_ipac_tap()
     """
-    if len(sys.argv) != 3 and len(sys.argv) != 5 and len(sys.argv != 6):
-        print("""
-Usage:
-   python run_vo.py base_name service_file "file" cone_file
-or
-   python run_vo.py base_name service_file num_cones min_radius max_radius
-or
-   python run_vo.py replay file 
-        """)
-    else:
-        if sys.argv[1] == 'replay':
-            replay(sys.argv[2])
-        elif sys.argv[3] == 'file':
-            run_from_files(sys.argv[1], sys.argv[2], sys.argv[4])
-        else:
-            run_with_cone_gen(sys.argv[1], sys.argv[2], sys.argv[3],
-                              sys.argv[4], sys.argv[5])
-    
+    run_cli(sys.argv[1:])
