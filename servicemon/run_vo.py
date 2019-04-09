@@ -1,3 +1,4 @@
+import sys
 from datetime import datetime
 from query_runner import QueryRunner
 from cone import Cone
@@ -45,7 +46,20 @@ def replay(filename):
     qr = QueryRunner(filename, None, results_dir='results',
                      stats_path=stats_path)
     qr.run()
-
+    
+def run_from_files(base_name, service_file, cone_file):
+    stats_path = compute_stats_path(base_name)
+    qr = QueryRunner(service_file, cone_file, results_dir='results',
+                     stats_path=stats_path)
+    qr.run()
+    
+def run_with_cone_gen(base_name, service_file, num_cones, min_radius, max_radius):
+    stats_path = compute_stats_path(base_name)
+    random_cones = Cone.generate_random(num_cones, min_radius, max_radius)
+    qr = QueryRunner(service_file, cone_file, results_dir='results',
+                     stats_path=stats_path)
+    qr.run()
+    
 
 if __name__ == '__main__':
 
@@ -54,5 +68,23 @@ if __name__ == '__main__':
     vo_test_random(2)
     twomass_random(1)
     sample_random(1)
-    """
     replay('stats/twomass_random_2019-03-31-22:56:46.160591.csv')
+    """
+    if len(sys.argv) != 3 and len(sys.argv) != 5 and len(sys.argv != 6):
+        print("""
+Usage:
+   python run_vo.py base_name service_file "file" cone_file
+or
+   python run_vo.py base_name service_file num_cones min_radius max_radius
+or
+   python run_vo.py replay file 
+        """)
+    else:
+        if sys.argv[1] == 'replay':
+            replay(sys.argv[2])
+        elif sys.argv[3] == 'file':
+            run_from_files(sys.argv[1], sys.argv[2], sys.argv[4])
+        else:
+            run_with_cone_gen(sys.argv[1], sys.argv[2], sys.argv[3],
+                              sys.argv[4], sys.argv[5])
+    
