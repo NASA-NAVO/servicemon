@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import sys
+import ast
 import pprint
 
 from numpy.random import random_sample as rand
@@ -69,7 +70,10 @@ class Cone:
     @staticmethod
     def write_random(num_points, min_radius, max_radius, filename=None):
         generator = Cone.generate_random(num_points, min_radius, max_radius)
+        Cone.write_cones(generator, filename)
 
+    @staticmethod
+    def write_cones(cones, filename=None):
         stream = sys.stdout
         if filename is not None:
             os.makedirs(os.path.dirname(filename), exist_ok=True)
@@ -79,7 +83,7 @@ class Cone:
         stream.write("[")
         sep = ''
         indent = '    '
-        for cone in generator:
+        for cone in cones:
             s = pp.pformat(cone)
             stream.write(f'{sep}\n{indent}{s}')
             sep = ','
@@ -87,3 +91,13 @@ class Cone:
 
         if filename is not None:
             stream.close()
+
+    @staticmethod
+    def reverse_cone_file(infile, outfile=None):
+        # read as Python literal
+        with open(infile, 'r') as f:
+            cones = ast.literal_eval(f.read())
+
+        cones.reverse()
+
+        Cone.write_cones(cones, outfile)

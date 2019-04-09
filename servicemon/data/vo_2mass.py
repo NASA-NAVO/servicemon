@@ -11,12 +11,6 @@
      'adql': ''
      },
 
-    {'base_name': '2MASS_IPAC_IPAC',
-     'service_type': 'cone',
-     'access_url': 'https://irsa.ipac.caltech.edu/SCS?table=fp_psc',
-     'adql': ''
-     },
-
     {'base_name': '2MASS_CDS',
      'service_type': 'cone',
      'access_url': 'http://vizier.u-strasbg.fr/viz-bin/conesearch/II/246/out?',
