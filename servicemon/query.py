@@ -39,13 +39,13 @@ class Query():
         self._service = service
         self._base_name = self._compute_base_name()
         self._service_type = self._compute_service_type()
-        self._access_url = self._compute_access_url()
         self._use_subdir = use_subdir
 
         self._orig_coords = coords
         self._orig_radius = radius
         self._coords = self._compute_coords()
         self._adql = self._compute_adql()
+        self._access_url = self._compute_access_url()
 
         if self._use_subdir:
             self._out_path = pathlib.Path(f'{out_dir}/{self._base_name}')
@@ -66,7 +66,10 @@ class Query():
 
     def run(self):
         if self._service_type == 'cone':
-            response = self.do_query()
+            response = self.do_cone_query()
+            self.stream_to_file(response)
+        if self._service_type == 'xcone':
+            response = self.do_xcone_query()
             self.stream_to_file(response)
         elif self._service_type == 'tap':
             tap_service = Tap(url=self._access_url)
@@ -87,8 +90,13 @@ class Query():
         return job
 
     @time_this('do_query')
-    def do_query(self):
+    def do_cone_query(self):
         response = requests.get(self._access_url, self._query_params, stream=True)
+        return response
+
+    @time_this('do_query')
+    def do_xcone_query(self):
+        response = requests.get(self._access_url, None, stream=True)
         return response
 
     @time_this('stream_to_file')
@@ -146,6 +154,11 @@ class Query():
         if access_url is None:
             raise(ValueError, 'service must have an access_url')
         access_url = html.unescape(access_url)
+
+        if self._service_type == 'xcone':
+            ra, dec, radius = self._get_ra_dec_radius()
+            access_url = access_url.format(ra, dec, radius)
+
         return access_url
 
     def _compute_coords(self):
@@ -168,25 +181,24 @@ class Query():
             adql = adql.format(self._coords.ra.deg, self._coords.dec.deg, self._orig_radius)
         return adql
 
-    def _compute_query_params(self):
-        params = {}
+    def _get_ra_dec_radius(self):
         if self._coords is not None:
-            params.update({
-                'RA': self._coords.ra.deg,
-                'DEC': self._coords.dec.deg,
-                'SR': self._orig_radius
-            })
+            ra = self._coords.ra.deg
+            dec = self._coords.dec.deg
+            radius = self._orig_radius
         else:
             ra = self.getval(self._service, 'RA', None)
             dec = self.getval(self._service, 'DEC', None)
-            sr = self.getval(self._service, 'SR', None)
-            if ra is not None and dec is not None and sr is not None:
-                params.update({
-                    'RA': ra,
-                    'DEC': dec,
-                    'SR': sr
-                })
+            radius = self.getval(self._service, 'SR', None)
+        return ra, dec, radius
 
+    def _compute_query_params(self):
+        ra, dec, radius = self._get_ra_dec_radius()
+        params = {
+            'RA': ra,
+            'DEC': dec,
+            'SR': radius
+        }
         if self._service_type == 'tap':
             params['ADQL'] = self.fix_white(self._adql)
 

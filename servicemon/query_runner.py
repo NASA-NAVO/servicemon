@@ -3,6 +3,7 @@ import sys
 import ast
 import csv
 import os
+import traceback
 
 from astropy.table import Table
 from query import Query
@@ -46,17 +47,34 @@ class QueryRunner():
         for cone in self._cones:
             if cone_index >= self._starting_cone:
                 for service in self._services:
-                    query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir,
-                                  verbose=self._verbose)
-                    query.run()
-                    self._collect_stats(query.stats)
+                    try:
+                        query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir,
+                                      verbose=self._verbose)
+                        query.run()
+                    except Exception as e:
+                        traceback.print_exc()
+                        print(f'Query error for cone {cone}, service {service}: {e}',
+                              file=sys.stderr, flush=True)
+                    try:
+                        self._collect_stats(query.stats)
+                    except Exception as e:
+                        print(f'Unable to write stats for cone {cone}, service {service}: {e}',
+                              file=sys.stderr, flush=True)
             cone_index += 1
 
     def _run_services_only(self):
         for service in self._services:
-            query = Query(service, None, None, self._results_dir)
-            query.run()
-            self._collect_stats(query.stats)
+            try:
+                query = Query(service, None, None, self._results_dir)
+                query.run()
+            except Exception as e:
+                print(f'Query error for service {service}: {e}',
+                      file=sys.stderr, flush=True)
+            try:
+                self._collect_stats(query.stats)
+            except Exception as e:
+                print(f'Unable to write stats for service {service}: {e}',
+                      file=sys.stderr, flush=True)
 
     def _collect_stats(self, stats):
         self.stats.append(stats)

@@ -126,7 +126,9 @@ if __name__ == '__main__':
     vo_test_random(2)
     twomass_random(1)
     sample_random(1)
-    replay('stats/twomass_random_2019-03-31-22:56:46.160591.csv')
     run_ipac_tap()
+    replay('stats/twomass_random_2019-03-31-22:56:46.160591.csv')
+    run_from_files('PS_Test', 'data/ps_services.py', 'data/cones.py', 0)
+    run_from_files('2MASS_Cone_Test', 'data/vo_2mass.py', 'data/cones.py', 0)
     """
     run_cli(sys.argv[1:])
