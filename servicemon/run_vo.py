@@ -124,7 +124,7 @@ def run_cli(argv):
 def receiveSignal(signalNumber, frame):
     now = datetime.now()
     dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
-    print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr)
+    print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr, flush=True)
     return
 
 
@@ -149,5 +149,4 @@ if __name__ == '__main__':
     run_from_files('2MASS_Cone_Test', 'data/vo_2mass.py', 'data/cones.py', 0)
     """
     catch_signals()
-    time.sleep(1000)
     run_cli(sys.argv[1:])
