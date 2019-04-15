@@ -1,5 +1,7 @@
 import sys
+import signal
 import getopt
+import time
 from datetime import datetime
 from query_runner import QueryRunner
 from cone import Cone
@@ -119,6 +121,21 @@ def run_cli(argv):
                           args[3], args[4])
 
 
+def receiveSignal(signalNumber, frame):
+    now = datetime.now()
+    dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+    print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr)
+    return
+
+
+def catch_signals():
+
+    # register the signals to be caught
+    signal.signal(signal.SIGHUP, receiveSignal)
+    signal.signal(signal.SIGQUIT, receiveSignal)
+    signal.signal(signal.SIGTERM, receiveSignal)
+
+
 if __name__ == '__main__':
 
     """
@@ -131,4 +148,6 @@ if __name__ == '__main__':
     run_from_files('PS_Test', 'data/ps_services.py', 'data/cones.py', 0)
     run_from_files('2MASS_Cone_Test', 'data/vo_2mass.py', 'data/cones.py', 0)
     """
+    catch_signals()
+    time.sleep(1000)
     run_cli(sys.argv[1:])
