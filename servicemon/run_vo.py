@@ -1,7 +1,6 @@
 import sys
 import signal
 import getopt
-import time
 from datetime import datetime
 from query_runner import QueryRunner
 from cone import Cone
@@ -147,6 +146,10 @@ if __name__ == '__main__':
     replay('stats/twomass_random_2019-03-31-22:56:46.160591.csv')
     run_from_files('PS_Test', 'data/ps_services.py', 'data/cones.py', 0)
     run_from_files('2MASS_Cone_Test', 'data/vo_2mass.py', 'data/cones.py', 0)
+
+
+    catch_signals()
+    run_cli(sys.argv[1:])
     """
     catch_signals()
     run_cli(sys.argv[1:])

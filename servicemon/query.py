@@ -8,7 +8,8 @@ import warnings
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astroquery.utils import parse_coordinates
-from astroquery.utils.tap.core import Tap
+
+from navotap.core import TapPlusNavo
 
 from query_stats import Interval, QueryStats
 
@@ -72,7 +73,7 @@ class Query():
             response = self.do_xcone_query()
             self.stream_to_file(response)
         elif self._service_type == 'tap':
-            tap_service = Tap(url=self._access_url)
+            tap_service = TapPlusNavo(url=self._access_url)
             job = self.do_tap_query(tap_service)
 
             # Adapted from job.__load_async_job_results() and utils.read_http_response()
