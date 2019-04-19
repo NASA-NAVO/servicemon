@@ -27,7 +27,7 @@ class TapPlusNavo(TapPlus):
     def __init__(self, url=None, host=None, server_context=None,
                  tap_context=None, port=80, sslport=443,
                  default_protocol_is_https=False, connhandler=None,
-                 verbose=True):
+                 agent=None, verbose=True):
         """
 
         Parameters
@@ -49,6 +49,7 @@ class TapPlusNavo(TapPlus):
         connhandler connection handler object, optional, default None
             HTTP(s) connection hander (creator). If no handler is provided, a
             new one is created.
+        agent : User-Agent string, optional, default None
         verbose : bool, optional, default 'True'
             flag to display information about the process
         """
@@ -57,6 +58,18 @@ class TapPlusNavo(TapPlus):
                                           tap_context, port, sslport,
                                           default_protocol_is_https,
                                           connhandler, verbose)
+
+        # Hack to set the User-Agent on TAP requests.
+        if agent is not None:
+            ch = self._Tap__connHandler
+            self.set_header_agent(ch._TapConn__postHeaders, agent)
+            self.set_header_agent(ch._TapConn__getHeaders, agent)
+
+    def set_header_agent(self, header, agent):
+        if header is not None:
+            header.update({
+                'User-Agent': agent
+            })
 
     def _Tap__launchJob(self, query, outputFormat,
                         context, verbose, name=None):

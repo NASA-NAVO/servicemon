@@ -36,7 +36,9 @@ class Query():
     """
     """
 
-    def __init__(self, service, coords, radius, out_dir, use_subdir=True, verbose=False):
+    def __init__(self, service, coords, radius, out_dir, use_subdir=True,
+                 agent='NAVO-servicemon', verbose=False):
+        self.__agent = agent
         self._service = service
         self._base_name = self._compute_base_name()
         self._service_type = self._compute_service_type()
@@ -73,7 +75,7 @@ class Query():
             response = self.do_xcone_query()
             self.stream_to_file(response)
         elif self._service_type == 'tap':
-            tap_service = TapPlusNavo(url=self._access_url)
+            tap_service = TapPlusNavo(url=self._access_url, agent=self.__agent)
             job = self.do_tap_query(tap_service)
 
             # Adapted from job.__load_async_job_results() and utils.read_http_response()
@@ -92,12 +94,12 @@ class Query():
 
     @time_this('do_query')
     def do_cone_query(self):
-        response = requests.get(self._access_url, self._query_params, stream=True)
+        response = self.do_request(self._access_url, self._query_params)
         return response
 
     @time_this('do_query')
     def do_xcone_query(self):
-        response = requests.get(self._access_url, None, stream=True)
+        response = self.do_request(self._access_url)
         return response
 
     @time_this('stream_to_file')
@@ -113,6 +115,20 @@ class Query():
         with open(self._filename, 'wb+') as fd:
             for chunk in response.iter_content(chunk_size=128):
                 fd.write(chunk)
+
+    def compute_headers(self):
+        headers = requests.utils.default_headers()
+        if self.__agent is not None:
+            headers.update({
+                'User-Agent': self.__agent
+            })
+        return headers
+
+    def do_request(self, url, params=None, agent=None):
+        headers = self.compute_headers()
+
+        response = requests.get(url, params, headers=headers, stream=True)
+        return response
 
     def _result_meta_attrs(self):
         return ['status', 'size', 'num_rows', 'num_columns']
