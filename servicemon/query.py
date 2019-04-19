@@ -207,6 +207,11 @@ class Query():
             ra = self.getval(self._service, 'RA', None)
             dec = self.getval(self._service, 'DEC', None)
             radius = self.getval(self._service, 'SR', None)
+        
+        # Hack because Chandra TAP service does arminutes instead of degrees.
+        if self._access_url.startswith('http://cda.harvard.edu/csctap'):
+            radius = 60 * radius
+
         return ra, dec, radius
 
     def _compute_query_params(self):
