@@ -27,7 +27,7 @@ class TapPlusNavo(TapPlus):
     def __init__(self, url=None, host=None, server_context=None,
                  tap_context=None, port=80, sslport=443,
                  default_protocol_is_https=False, connhandler=None,
-                 agent=None, verbose=True):
+                 agent=None, verbose=False):
         """
 
         Parameters
@@ -50,7 +50,7 @@ class TapPlusNavo(TapPlus):
             HTTP(s) connection hander (creator). If no handler is provided, a
             new one is created.
         agent : User-Agent string, optional, default None
-        verbose : bool, optional, default 'True'
+        verbose : bool, optional, default 'False'
             flag to display information about the process
         """
 
