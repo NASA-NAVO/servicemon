@@ -9,10 +9,6 @@ from astropy.table import Table
 from query import Query
 
 
-def from_table_file(source):
-    pass
-
-
 class QueryRunner():
     """
     """
@@ -115,6 +111,10 @@ def cone_test():
     qr = QueryRunner('data/services.py', 'data/cones.py', results_dir='results',
                      stats_path=stats_path)
     qr.run()
+
+
+def OtherBiGTest():
+    pass
 
 
 if __name__ == '__main__':

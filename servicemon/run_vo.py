@@ -19,7 +19,7 @@ def run_ipac_tap():
         {'base_name': '2MASS_IPAC',
          'service_type': 'tap',
          'access_url': 'https://irsa.ipac.caltech.edu/TAP',
-         'adql':'''
+         'adql': '''
         SELECT ra, dec, j_m, h_m, k_m FROM fp_psc
         WHERE CONTAINS(POINT('ICRS',ra, dec),
         CIRCLE('J2000',{},{},{}))=1
@@ -56,8 +56,8 @@ def twomass_random(num_cones):
 
 def sample_random(num_cones):
     stats_path = compute_stats_path('sample_random')
-    qr = QueryRunner('data/sample.py', [{'ra': 125.886, 'dec': 21.3377, 'radius': 0.05}],  results_dir='results',
-                     stats_path=stats_path, verbose=True)
+    qr = QueryRunner('data/sample.py', [{'ra': 125.886, 'dec': 21.3377, 'radius': 0.05}],
+                     results_dir='results', stats_path=stats_path, verbose=True)
     qr.run()
 
 
@@ -84,14 +84,14 @@ def run_with_cone_gen(base_name, service_file, num_cones, min_radius, max_radius
 
 
 def usage():
-        print("""
+    print("""
 Usage:
    python run_vo.py <base_name> <service_file> file <cone_file> <starting_cone>
 or
    python run_vo.py <base_name> <service_file> <num_cones> <min_radius> <max_radius>
 or
    python run_vo.py replay <file>
-        """)
+    """)
 
 
 def run_cli(argv):
@@ -103,7 +103,7 @@ def run_cli(argv):
         sys.exit(2)
 
     for opt, arg in opts:
-        if opt == '-h' or opt == '--help':
+        if opt in ('-h', '--help'):
             usage()
             sys.exit(0)
 
@@ -124,7 +124,6 @@ def receiveSignal(signalNumber, frame):
     now = datetime.now()
     dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
     print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr, flush=True)
-    return
 
 
 def catch_signals():
@@ -164,5 +163,6 @@ if __name__ == '__main__':
     catch_signals()
     run_cli(sys.argv[1:])
     """
+    
     catch_signals()
     run_cli(sys.argv[1:])
