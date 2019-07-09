@@ -28,14 +28,14 @@ def test_errors():
     with pytest.raises(ValueError) as e_info:
         Cone.random_cone(2, 1)
     assert ('min-radius must be in the range [0,max_radius).'
-            in str(e_info))
+            in str(e_info.value))
 
     with pytest.raises(ValueError) as e_info:
         Cone.generate_random(20, 3, 1)
     assert ('min-radius must be in the range [0,max_radius).'
-            in str(e_info))
+            in str(e_info.value))
 
     with pytest.raises(ValueError) as e_info:
         Cone.generate_random(-14, 6, 7)
     assert ('num_points must be a positive number.'
-            in str(e_info))
+            in str(e_info.value))
