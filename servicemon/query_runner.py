@@ -6,7 +6,7 @@ import os
 import traceback
 
 from astropy.table import Table
-from query import Query
+from .query import Query
 
 
 class QueryRunner():
@@ -43,6 +43,7 @@ class QueryRunner():
         for cone in self._cones:
             if cone_index >= self._starting_cone:
                 for service in self._services:
+                    query = None  # Ensure that we won't use the previous results upon new exception.
                     try:
                         query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir,
                                       verbose=self._verbose)

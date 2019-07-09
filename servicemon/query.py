@@ -1,17 +1,17 @@
-import html
-import requests
 import os
 import sys
 import pathlib
 import warnings
 
+import html
+import requests
+
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astroquery.utils import parse_coordinates
 
-from navotap.core import TapPlusNavo
-
-from query_stats import Interval, QueryStats
+from .navotap.core import TapPlusNavo
+from .query_stats import Interval, QueryStats
 
 
 def get_data():
@@ -49,6 +49,11 @@ class Query():
         self._coords = self._compute_coords()
         self._adql = self._compute_adql()
         self._access_url = self._compute_access_url()
+
+        # Add cone params to xcone access_url
+        if self._service_type == 'xcone':
+            ra, dec, radius = self._get_ra_dec_radius()
+            self._access_url = self._access_url.format(ra, dec, radius)
 
         if self._use_subdir:
             self._out_path = pathlib.Path(f'{out_dir}/{self._base_name}')
@@ -169,12 +174,8 @@ class Query():
     def _compute_access_url(self):
         access_url = self.getval(self._service, 'access_url')
         if access_url is None:
-            raise(ValueError, 'service must have an access_url')
+            raise ValueError('service must have an access_url')
         access_url = html.unescape(access_url)
-
-        if self._service_type == 'xcone':
-            ra, dec, radius = self._get_ra_dec_radius()
-            access_url = access_url.format(ra, dec, radius)
 
         return access_url
 
@@ -193,9 +194,14 @@ class Query():
         return coords
 
     def _compute_adql(self):
-        adql = self.getval(self._service, 'adql', '')
+        adql = self.getval(self._service, 'ADQL', '')
+        if adql == '':
+            adql = self.getval(self._service, 'adql', '')
+
+        # coords will be None on a replay, where this substitution has already happened.
         if self._coords is not None:
             adql = adql.format(self._coords.ra.deg, self._coords.dec.deg, self._orig_radius)
+
         return adql
 
     def _get_ra_dec_radius(self):
@@ -207,7 +213,7 @@ class Query():
             ra = self.getval(self._service, 'RA', None)
             dec = self.getval(self._service, 'DEC', None)
             radius = self.getval(self._service, 'SR', None)
-        
+
         # Hack because Chandra TAP service does arminutes instead of degrees.
         if self._access_url.startswith('http://cda.harvard.edu/csctap'):
             radius = 60 * radius
