@@ -130,27 +130,30 @@ Cones: {args.cone_file} [{args.start_index}:]''')
 
             elif pa.command == 'query':
                 if pa.cone_file is not None:
-                    self.run_from_files(pa.services, pa.output, pa.cone_file,
+                    self.query_from_cone_file(pa.services, pa.output, pa.cone_file,
                                         pa.start_index, pa.verbose)
 
                 elif pa.num_cones is not None:
-                    self.run_with_cone_gen(pa.services, pa.output, pa.num_cones,
+                    self.query_with_cone_gen(pa.services, pa.output, pa.num_cones,
                                            pa.min_radius, pa.max_radius,
                                            pa.verbose)
+            elif pa.command == 'conegen':
+                Cone.write_random(pa.num_cones, pa.min_radius, pa.max_radius,
+                                  filename=pa.output)
 
     def replay(self, filename, output, verbose):
         qr = QueryRunner(filename, None, results_dir='results',
                          stats_path=output, verbose=verbose)
         qr.run()
 
-    def run_from_files(self, service_file, output, cone_file,
+    def query_from_cone_file(self, service_file, output, cone_file,
                        starting_cone, verbose):
         qr = QueryRunner(service_file, cone_file, results_dir='results',
                          stats_path=output, starting_cone=starting_cone,
                          verbose=verbose)
         qr.run()
 
-    def run_with_cone_gen(self, service_file, output,
+    def query_with_cone_gen(self, service_file, output,
                           num_cones, min_radius, max_radius, verbose):
         random_cones = Cone.generate_random(num_cones, min_radius, max_radius)
         qr = QueryRunner(service_file, random_cones, results_dir='results',
