@@ -1,9 +1,9 @@
-import numpy as np
 import os
 import sys
 import ast
 import pprint
 
+import numpy as np
 from numpy.random import random_sample as rand
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -17,7 +17,6 @@ class Cone:
         """
         Not intended to be instantiated.
         """
-        pass
 
     @staticmethod
     def random_skycoord():
@@ -38,13 +37,13 @@ class Cone:
         dec_rad = np.arcsin(2. * (rand() - 0.5)) * u.rad
         dec_deg = dec_rad.to_value(u.deg)
 
-        return {'ra':ra_deg, 'dec':dec_deg}
+        return {'ra': ra_deg, 'dec': dec_deg}
 
     @staticmethod
     def random_cone(min_radius, max_radius):
         """
         """
-        if not (0 <= min_radius < max_radius):
+        if not 0 <= min_radius < max_radius:
             raise ValueError('min-radius must be in the range [0,max_radius).')
         coords = Cone.random_coords()
         coords['radius'] = (max_radius - min_radius) * rand() + min_radius
@@ -55,12 +54,13 @@ class Cone:
         """
         Yield objects with random (and legal) ra, dec, and radius attirbutes.
         """
-        if not (0 <= min_radius < max_radius):
+        if not 0 <= min_radius < max_radius:
             raise ValueError('min-radius must be in the range [0,max_radius).')
         if num_points <= 0:
             raise ValueError('num_points must be a positive number.')
 
         def cones(num_points, min_radius, max_radius):
+            # pylint: disable=unused-variable
             for i in range(num_points):
                 cone = Cone.random_cone(min_radius, max_radius)
                 yield cone
