@@ -11,7 +11,8 @@ def test_interval():
 
 
 def test_params():
-    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone', 'http://google.com',
+    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone',
+                    'http://google.com',
                     {'RA': 123.4, 'DEC': 56.7, 'SR': 8.9},
                     {'meta1': 14, 'meta2': 'important data'})
     rv = qs.row_values()
@@ -28,9 +29,11 @@ def test_params():
     assert 'meta1' in qs.columns()
     assert 'meta2' in qs.columns()
 
-    qs = QueryStats('Pan-STARRS_random_tap', 'Pan-STARRS_', 'tap', 'http://google.com',
+    qs = QueryStats('Pan-STARRS_random_tap', 'Pan-STARRS_', 'tap',
+                    'http://google.com',
                     {'ADQL': 'select cool_stuff from some_table'},
-                    {'meta1': 14, 'meta2': 'important data', 'meta3': 42}, max_intervals=3)
+                    {'meta1': 14, 'meta2': 'important data', 'meta3': 42},
+                    max_intervals=3)
     rv = qs.row_values()
     assert rv['RA'] == ''
     assert rv['DEC'] == ''
@@ -41,7 +44,8 @@ def test_params():
     assert 'int2_duration' in qs.columns()
     assert 'meta3' in qs.columns()
 
-    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone', 'http://google.com',
+    qs = QueryStats('HSC_cone_123.4_56.7_8.9', 'HSC', 'cone',
+                    'http://google.com',
                     {'RA': 123.4, 'DEC': 56.7, 'SR': 8.9, 'verbose': 3},
                     {'meta1': 14, 'meta2': 'important data'})
     rv = qs.row_values()

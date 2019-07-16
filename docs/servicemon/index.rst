@@ -2,7 +2,7 @@
 servicemon Documentation
 ************************
 
-This is the documentation for servicemon.
+Let's leave this page alone.
 
 Reference/API
 =============
