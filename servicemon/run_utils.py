@@ -1,13 +1,12 @@
 import sys
 import signal
 import warnings
+warnings.filterwarnings("ignore", message='astropy.extern.six will be removed')
 
 from argparse import ArgumentParser
 from datetime import datetime
 from .query_runner import QueryRunner
 from .cone import Cone
-
-warnings.filterwarnings("ignore", message='astropy.extern.six will be removed')
 
 
 class Runner():
