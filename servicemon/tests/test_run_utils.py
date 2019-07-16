@@ -65,7 +65,8 @@ def test_replay_args(capsys):
     check_err_msg(capsys, ['replay'],
                   'replay: error: the following arguments are required: file')
 
-    check_err_msg(capsys, ['replay', 'testfile.csv', 'outfile.csv', 'testfile2.csv'],
+    check_err_msg(capsys,
+                  ['replay', 'testfile.csv', 'outfile.csv', 'testfile2.csv'],
                   'error: unrecognized arguments: testfile2.csv')
 
     check_err_msg(capsys, ['replay', '-x', 'testfile.csv', 'outfile.csv'],
@@ -107,7 +108,8 @@ def test_query_args(capsys):
     check_err_msg(capsys, ['query', 'test_service_file', 'test_outout_file',
                            '--num-cones', '42',
                            '--cone-file', 'test_cone_file'],
-                  'error: argument --cone-file: not allowed with argument --num-cones')
+                  'error: argument --cone-file: '
+                  'not allowed with argument --num-cones')
 
     check_err_msg(capsys, ['query', 'test_service_file', 'test_outout_file',
                            '--min-radius', '23'],
@@ -128,7 +130,8 @@ def test_query_args(capsys):
     check_err_msg(capsys, ['query', 'test_service_file', 'test_outout_file',
                            '--num-cones', '42',
                            '--start-index', '13'],
-                  'error: argument --cone-file is required when --start-index is present')
+                  'error: argument --cone-file '
+                  'is required when --start-index is present')
 
 
 def test_conegen_args(capsys):

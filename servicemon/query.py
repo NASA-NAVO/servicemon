@@ -65,8 +65,9 @@ class Query():
         self._query_name = self._compute_query_name()
         self._filename = self._out_path / (self._query_name + '.xml')
 
-        self._stats = QueryStats(self._query_name, self._base_name, self._service_type,
-                                 self._access_url, self._query_params, self._result_meta_attrs())
+        self._stats = QueryStats(
+            self._query_name, self._base_name, self._service_type,
+            self._access_url, self._query_params, self._result_meta_attrs())
 
     @property
     def stats(self):
@@ -83,8 +84,10 @@ class Query():
             tap_service = TapPlusNavo(url=self._access_url, agent=self.__agent)
             job = self.do_tap_query(tap_service)
 
-            # Adapted from job.__load_async_job_results() and utils.read_http_response()
-            # TBD: Loses the part of utils.read_http_response() that corrects units.
+            # Adapted from job.__load_async_job_results() and
+            # utils.read_http_response().
+            # TBD: Loses the part of utils.read_http_response() that corrects
+            # units.
             subContext = "async/" + str(job.jobid) + "/results/result"
             response = job.connHandler.execute_get(subContext)
             self.stream_tap_to_file(response)
@@ -184,8 +187,10 @@ class Query():
         in_coords = self._orig_coords
         coords = in_coords
         if in_coords is not None:
-            if (type(in_coords) is tuple or type(in_coords) is list) and len(in_coords) == 2:
-                coords = SkyCoord(in_coords[0], in_coords[1], frame="icrs", unit="deg")
+            if ((type(in_coords) is tuple or type(in_coords) is list) and
+                    len(in_coords) == 2):
+                coords = SkyCoord(in_coords[0], in_coords[1], frame="icrs",
+                                  unit="deg")
             elif type(in_coords) is str:
                 coords = parse_coordinates(in_coords)
             elif type(in_coords) is not SkyCoord:
@@ -198,9 +203,11 @@ class Query():
         if adql == '':
             adql = self.getval(self._service, 'adql', '')
 
-        # coords will be None on a replay, where this substitution has already happened.
+        # coords will be None on a replay,
+        # since this substitution has already happened.
         if self._coords is not None:
-            adql = adql.format(self._coords.ra.deg, self._coords.dec.deg, self._orig_radius)
+            adql = adql.format(self._coords.ra.deg, self._coords.dec.deg,
+                               self._orig_radius)
 
         return adql
 

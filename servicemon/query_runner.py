@@ -43,19 +43,23 @@ class QueryRunner():
         for cone in self._cones:
             if cone_index >= self._starting_cone:
                 for service in self._services:
-                    query = None  # Ensure that we won't use the previous results upon new exception.
+                    # Don't use the previous results upon new exception.
+                    query = None
                     try:
-                        query = Query(service, (cone['ra'], cone['dec']), cone['radius'], self._results_dir,
+                        query = Query(service, (cone['ra'], cone['dec']),
+                                      cone['radius'], self._results_dir,
                                       verbose=self._verbose)
                         query.run()
                     except Exception as e:
                         traceback.print_exc()
-                        print(f'Query error for cone {cone}, service {service}: {e}',
+                        print(f'Query error for cone {cone}, '
+                              'service {service}: {e}',
                               file=sys.stderr, flush=True)
                     try:
                         self._collect_stats(query.stats)
                     except Exception as e:
-                        print(f'Unable to write stats for cone {cone}, service {service}: {e}',
+                        print(f'Unable to write stats for cone {cone}, '
+                              'service {service}: {e}',
                               file=sys.stderr, flush=True)
             cone_index += 1
 
@@ -85,7 +89,8 @@ class QueryRunner():
             self._output_stats_row_to_file(stats, sys.stdout)
 
     def _output_stats_row_to_file(self, stats, stat_file):
-        writer = csv.DictWriter(stat_file, dialect='excel', fieldnames=stats.columns())
+        writer = csv.DictWriter(stat_file, dialect='excel',
+                                fieldnames=stats.columns())
         if self._first_stat:
             self._first_stat = False
             writer.writeheader()
@@ -104,20 +109,3 @@ class QueryRunner():
                 # assume csv and read into Table
                 val = Table.read(obj, format='ascii.csv')
         return val
-
-
-def cone_test():
-    now = datetime.now()
-    stats_path = 'stats/newstats_' + now.strftime('%Y-%m-%d-%H:%M:%S.%f') + '.csv'
-    qr = QueryRunner('data/services.py', 'data/cones.py', results_dir='results',
-                     stats_path=stats_path)
-    qr.run()
-
-
-def OtherBiGTest():
-    pass
-
-
-if __name__ == '__main__':
-
-    cone_test()

@@ -76,7 +76,9 @@ class Cone:
     def write_cones(cones, filename=None):
         stream = sys.stdout
         if filename is not None:
-            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            dirname = os.path.dirname(filename)
+            if dirname != '':
+                os.makedirs(dirname, exist_ok=True)
             stream = open(filename, "w", encoding="utf-8")
 
         pp = pprint.PrettyPrinter(width=100, stream=stream, compact=True)
