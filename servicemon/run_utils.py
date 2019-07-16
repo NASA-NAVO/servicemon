@@ -54,11 +54,11 @@ class Runner():
         conegen_args.add_argument(
             '--num-cones', type=int, help='Number of cones to generate')
         conegen_args.add_argument(
-            '--min-radius', type=float, help=f'Minimum radius (deg).'
-            ' Default={self.conegen_defaults["min_radius"]}')
+            '--min-radius', type=float, help='Minimum radius (deg).'
+            f' Default={self.conegen_defaults["min_radius"]}')
         conegen_args.add_argument(
             '--max-radius', type=float, help='Maximum radius (deg).'
-            ' Default={self.conegen_defaults["max_radius"]}')
+            f' Default={self.conegen_defaults["max_radius"]}')
 
         replay = sps.add_parser(
             'replay',
@@ -89,11 +89,11 @@ class Runner():
 
         cone_random = query.add_argument_group()
         cone_random.add_argument(
-            '--min-radius', type=float, help=f'Minimum radius (deg).'
-            ' Default={self.conegen_defaults["min_radius"]}')
+            '--min-radius', type=float, help='Minimum radius (deg).'
+            f' Default={self.conegen_defaults["min_radius"]}')
         cone_random.add_argument(
             '--max-radius', type=float, help='Maximum radius (deg).'
-            ' Default={self.conegen_defaults["max_radius"]}')
+            f' Default={self.conegen_defaults["max_radius"]}')
 
         cone_file = query.add_argument_group()
         cone_file.add_argument('--start-index', type=int)

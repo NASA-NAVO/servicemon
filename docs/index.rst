@@ -89,12 +89,10 @@ result files depends on the service base name, type and query parameters.
                             Number of cones to generate
       --cone-file CONE_FILE
 
-      --min-radius MIN_RADIUS
-                            Minimum radius (deg).
-                            Default={self.conegen_defaults["min_radius"]}
-      --max-radius MAX_RADIUS
-                            Maximum radius (deg).
-                            Default={self.conegen_defaults["max_radius"]}
+    --min-radius MIN_RADIUS
+                          Minimum radius (deg). Default=0
+    --max-radius MAX_RADIUS
+                          Maximum radius (deg). Default=0.25
 
       --start-index START_INDEX
 
@@ -204,11 +202,9 @@ random list of cones that can be used by a subsequent ``servicemon query``.
       --num-cones NUM_CONES
                             Number of cones to generate
       --min-radius MIN_RADIUS
-                            Minimum radius (deg).
-                            Default={self.conegen_defaults["min_radius"]}
+                            Minimum radius (deg). Default=0
       --max-radius MAX_RADIUS
-                            Maximum radius (deg).
-                            Default={self.conegen_defaults["max_radius"]}
+                            Maximum radius (deg). Default=0.25
 
 The example below generates the file ``new_cones.py`` which contains 3 cone
 definitions, each with a random RA and Dec, and a random radius from 0 to 1 degree.
