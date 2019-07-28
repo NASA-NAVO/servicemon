@@ -53,13 +53,13 @@ class QueryRunner():
                     except Exception as e:
                         traceback.print_exc()
                         print(f'Query error for cone {cone}, '
-                              'service {service}: {e}',
+                              f'service {service}: {e}',
                               file=sys.stderr, flush=True)
                     try:
                         self._collect_stats(query.stats)
                     except Exception as e:
                         print(f'Unable to write stats for cone {cone}, '
-                              'service {service}: {e}',
+                              f'service {service}: {e}',
                               file=sys.stderr, flush=True)
             cone_index += 1
 

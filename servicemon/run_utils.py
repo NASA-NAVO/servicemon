@@ -134,6 +134,9 @@ class Runner():
         if parsed_args.verbose or parsed_args.norun:
             self.print_arg_info(parsed_args)
 
+        if parsed_args.verbose:
+            self.enable_requests_logging()
+
         return parsed_args
 
     def print_arg_info(self, args):
