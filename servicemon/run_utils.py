@@ -31,6 +31,9 @@ class Runner():
         parser.add_argument('-b', '--batch', dest='batch', action='store_true',
                             help='Catch SIGHUP, SIGQUIT and SIGTERM'
                             ' to allow running in the background')
+        parser.add_argument('-t', '--tap-mode', dest='tap_mode',
+                            choices={'sync', 'async'}, default='async',
+                            help='How to run TAP queries')
         parser.add_argument('-n', '--norun', dest='norun', action='store_true',
                             help='Display summary of command arguments without'
                             'performing any actions')
@@ -134,12 +137,16 @@ class Runner():
         if parsed_args.verbose or parsed_args.norun:
             self.print_arg_info(parsed_args)
 
+        if parsed_args.verbose:
+            self.enable_requests_logging()
+
         return parsed_args
 
     def print_arg_info(self, args):
         print(f'''
 Options:
 batch: {args.batch}
+tap_mode: {args.tap_mode}
 norun: {args.norun}
 verbose: {args.verbose}''')
 
@@ -167,39 +174,35 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
 
         if not pa.norun:
             if pa.command == 'replay':
-                self.replay(pa.file, pa.output, pa.verbose)
+                self.replay(pa)
 
             elif pa.command == 'query':
                 if pa.cone_file is not None:
-                    self.query_from_cone_file(pa.services, pa.output,
-                                              pa.cone_file, pa.start_index,
-                                              pa.verbose)
+                    self.query_from_cone_file(pa)
 
                 elif pa.num_cones is not None:
-                    self.query_with_cone_gen(pa.services, pa.output,
-                                             pa.num_cones, pa.min_radius,
-                                             pa.max_radius, pa.verbose)
+                    self.query_with_cone_gen(pa)
             elif pa.command == 'conegen':
                 Cone.write_random(pa.num_cones, pa.min_radius, pa.max_radius,
                                   filename=pa.output)
 
-    def replay(self, filename, output, verbose):
-        qr = QueryRunner(filename, None, results_dir='results',
-                         stats_path=output, verbose=verbose)
+    def replay(self, pa):
+        qr = QueryRunner(pa.file, None, results_dir='results',
+                         stats_path=pa.output, tap_mode=pa.tap_mode,
+                         verbose=pa.verbose)
         qr.run()
 
-    def query_from_cone_file(self, service_file, output, cone_file,
-                             starting_cone, verbose):
-        qr = QueryRunner(service_file, cone_file, results_dir='results',
-                         stats_path=output, starting_cone=starting_cone,
-                         verbose=verbose)
+    def query_from_cone_file(self, pa):
+        qr = QueryRunner(pa.services, pa.cone_file, results_dir='results',
+                         stats_path=pa.output, starting_cone=pa.start_index,
+                         tap_mode=pa.tap_mode, verbose=pa.verbose)
         qr.run()
 
-    def query_with_cone_gen(self, service_file, output, num_cones, min_radius,
-                            max_radius, verbose):
-        random_cones = Cone.generate_random(num_cones, min_radius, max_radius)
-        qr = QueryRunner(service_file, random_cones, results_dir='results',
-                         stats_path=output, verbose=verbose)
+    def query_with_cone_gen(self, pa):
+        random_cones = Cone.generate_random(pa.num_cones, pa.min_radius, pa.max_radius)
+        qr = QueryRunner(pa.services, random_cones, results_dir='results',
+                         stats_path=pa.output, tap_mode=pa.tap_mode,
+                         verbose=pa.verbose)
         qr.run()
 
     def receiveSignal(self, signalNumber, frame):

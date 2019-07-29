@@ -14,11 +14,6 @@ from .navotap.core import TapPlusNavo
 from .query_stats import Interval, QueryStats
 
 
-def get_data():
-    "Just for testing testing"
-    return ['012345678901234567890123456']
-
-
 def time_this(interval_name):
     def time_this_decorator(func):
         def wrapper(*args, **kwargs):
@@ -37,8 +32,9 @@ class Query():
     """
 
     def __init__(self, service, coords, radius, out_dir, use_subdir=True,
-                 agent='NAVO-servicemon', verbose=False):
+                 agent='NAVO-servicemon', tap_mode='async', verbose=False):
         self.__agent = agent
+        self._tap_mode = tap_mode
         self._service = service
         self._base_name = self._compute_base_name()
         self._service_type = self._compute_service_type()
@@ -82,23 +78,36 @@ class Query():
             self.stream_to_file(response)
         elif self._service_type == 'tap':
             tap_service = TapPlusNavo(url=self._access_url, agent=self.__agent)
-            job = self.do_tap_query(tap_service)
 
-            # Adapted from job.__load_async_job_results() and
-            # utils.read_http_response().
-            # TBD: Loses the part of utils.read_http_response() that corrects
-            # units.
-            subContext = "async/" + str(job.jobid) + "/results/result"
-            response = job.connHandler.execute_get(subContext)
+            if self._tap_mode == 'async':
+                response = self.do_tap_query_async(tap_service)
+            else:
+                response = self.do_tap_query(tap_service)
+
             self.stream_tap_to_file(response)
 
         self.gather_response_metadata(response)
 
     @time_this('do_query')
-    def do_tap_query(self, tap_service):
-        job = tap_service.launch_job_async(self._adql, background=True)
+    def do_tap_query_async(self, tap_service):
+        job = tap_service.launch_job_async(self._adql, background=True,
+                                           verbose=self._verbose)
         job.wait_for_job_end()
-        return job
+
+        # Adapted from job.__load_async_job_results() and
+        # utils.read_http_response().
+        # TBD: Loses the part of utils.read_http_response() that corrects
+        # units.
+        subContext = "async/" + str(job.jobid) + "/results/result"
+        response = job.connHandler.execute_get(subContext)
+
+        return response
+
+    @time_this('do_query')
+    def do_tap_query(self, tap_service):
+        job, response = tap_service.launch_job(self._adql,
+                                               verbose=self._verbose)
+        return response
 
     @time_this('do_query')
     def do_cone_query(self):
@@ -241,6 +250,8 @@ class Query():
 
     def _compute_query_name(self):
         name = f'{self._base_name}_{self._service_type}'
+        if self._service_type == 'tap':
+            name += f'-{self._tap_mode}'
         ra = self._query_params.get('RA')
         dec = self._query_params.get('DEC')
         sr = self._query_params.get('SR')
