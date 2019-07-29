@@ -30,7 +30,8 @@ either ``conegen``, ``replay`` or ``query``.
 
     $ servicemon --help
 
-    usage: servicemon [-h] [-b] [-n] [-v] conegen|replay|query ...
+    usage: servicemon [-h] [-b] [-t {sync,async}] [-n] [-v]
+                      conegen|replay|query ...
 
     Measure service performance.
 
@@ -44,6 +45,8 @@ either ``conegen``, ``replay`` or ``query``.
       -h, --help            show this help message and exit
       -b, --batch           Catch SIGHUP, SIGQUIT and SIGTERM to allow running in
                             the background
+      -t {sync,async}, --tap-mode {sync,async}
+                            How to run TAP queries
       -n, --norun           Display summary of command arguments withoutperforming
                             any actions
       -v, --verbose         Print additional information to stdout

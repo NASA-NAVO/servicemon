@@ -26,28 +26,35 @@ def check_err_msg(capsys, args, msg):
 def test_global_args(capsys):
     args = parse_args(['replay', 'testfile.csv', 'outfile.csv'])
     assert not args.batch
+    assert args.tap_mode == 'async'
     assert not args.norun
     assert not args.verbose
 
-    args = parse_args(['-b', 'replay', 'testfile.csv', 'outfile.csv'])
+    args = parse_args(['-b', '-t', 'sync',
+                       'replay', 'testfile.csv', 'outfile.csv'])
     assert args.batch
+    assert args.tap_mode == 'sync'
     assert not args.norun
     assert not args.verbose
 
-    args = parse_args(['--batch', 'replay', 'testfile.csv', 'outfile.csv'])
+    args = parse_args(['--batch', '--tap-mode', 'sync',
+                       'replay', 'testfile.csv', 'outfile.csv'])
     assert args.batch
+    assert args.tap_mode == 'sync'
     assert not args.norun
     assert not args.verbose
 
     args = parse_args(['--batch', '--norun', '--verbose',
                        'replay', 'testfile.csv', 'outfile.csv'])
     assert args.batch
+    assert args.tap_mode == 'async'
     assert args.norun
     assert args.verbose
 
     args = parse_args(['-b', '-n', '-v',
                        'replay', 'testfile.csv', 'outfile.csv'])
     assert args.batch
+    assert args.tap_mode == 'async'
     assert args.norun
     assert args.verbose
 
@@ -56,6 +63,10 @@ def test_global_args(capsys):
 
     check_err_msg(capsys, ['replay', '--batch', 'testfile.csv', 'outfile.csv'],
                   'error: unrecognized arguments: --batch')
+
+    check_err_msg(capsys, ['-t', 'nosync',
+                           'replay', 'testfile.csv', 'outfile.csv'],
+                  'error: argument -t/--tap-mode: invalid choice')
 
 
 def test_replay_args(capsys):
@@ -75,6 +86,13 @@ def test_replay_args(capsys):
 
 def test_query_args(capsys):
     args = parse_args(['query', 'test_service_file', 'test_output_file'])
+    assert args.tap_mode == 'async'
+    assert args.services == 'test_service_file'
+    assert args.output == 'test_output_file'
+
+    args = parse_args(['--tap-mode', 'sync',
+                       'query', 'test_service_file', 'test_output_file'])
+    assert args.tap_mode == 'sync'
     assert args.services == 'test_service_file'
     assert args.output == 'test_output_file'
 

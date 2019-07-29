@@ -4,4 +4,3 @@ from servicemon.run_utils import Runner
 
 runner = Runner()
 runner.run_cl(sys.argv[1:])
-

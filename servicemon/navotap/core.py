@@ -5,7 +5,10 @@ TAP plus
 =============
 
 """
+import requests
+
 from astroquery.utils.tap.core import TapPlus
+from astroquery.utils.tap.model.job import Job
 
 
 __all__ = ['TapPlusNavo']
@@ -106,6 +109,8 @@ class TapPlusNavo(TapPlus):
         ------------------
         This was added in order to run the job after it was created
         """
+        if verbose:
+            print(f'Running async query for job: {jobid}')
         args = {
             "PHASE": "RUN"}
         data = self._Tap__connHandler.url_encode(args)
@@ -115,3 +120,78 @@ class TapPlusNavo(TapPlus):
             print(response.status, response.reason)
             print(response.getheaders())
         return response
+
+    def launch_job(self, query, name=None, output_file=None,
+                   output_format="votable", verbose=False,
+                   dump_to_file=False, upload_resource=None,
+                   upload_table_name=None):
+        """Launches a synchronous job
+
+        Parameters
+        ----------
+        query : str, mandatory
+            query to be executed
+        output_file : str, optional, default None
+            file name where the results are saved if dumpToFile is True.
+            If this parameter is not provided, the jobid is used instead
+        output_format : str, optional, default 'votable'
+            results format
+        verbose : bool, optional, default 'False'
+            flag to display information about the process
+        dump_to_file : bool, optional, default 'False'
+            if True, the results are saved in a file instead of using memory
+        upload_resource: str, optional, default None
+            resource to be uploaded to UPLOAD_SCHEMA
+        upload_table_name: str, required if uploadResource is provided, default None
+            resource temporary table name associated to the uploaded resource
+
+        Returns
+        -------
+        A Job object
+        """
+        # Do not limit these queries. query = taputils.set_top_in_query(query, 2000)
+        if verbose:
+            print("Launched sync query: '"+str(query)+"'")
+        if upload_resource is not None:
+            if upload_table_name is None:
+                raise ValueError("Table name is required when a resource is uploaded")
+            response = self._Tap__launchJobMultipart(
+                query, upload_resource, upload_table_name,
+                output_format, "sync", verbose, name)
+        else:
+            response = self._Tap__launchJob(query,
+                                            output_format,
+                                            "sync",
+                                            verbose,
+                                            name)
+        # handle redirection
+        if response.status == 303:
+            # redirection
+            if verbose:
+                print("Redirection found")
+            location = self._Tap__connHandler.find_header(
+                response.getheaders(),
+                "location")
+            if location is None:
+                raise requests.exceptions.HTTPError("No location found after redirection was received (303)")
+            if verbose:
+                print("Redirect to %s", location)
+            subcontext = self._Tap__extract_sync_subcontext(location)
+            response = self._Tap__connHandler.execute_get(subcontext)
+        job = Job(async_job=False, query=query, connhandler=self._Tap__connHandler)
+        isError = self._Tap__connHandler.check_launch_response_status(
+            response, verbose, 200)
+        suitableOutputFile = self._Tap__getSuitableOutputFile(
+            False, output_file, response.getheaders(), isError,
+            output_format)
+        job.outputFile = suitableOutputFile
+        job.parameters['format'] = output_format
+        job.set_response_status(response.status, response.reason)
+        if isError:
+            job.set_failed(True)
+            if dump_to_file:
+                self._Tap__connHandler.dump_to_file(suitableOutputFile, response)
+            raise requests.exceptions.HTTPError(response.reason)
+        else:
+            pass
+        return job, response
