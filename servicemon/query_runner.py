@@ -16,15 +16,17 @@ class QueryRunner():
     _first_stat = True
     stats = []
 
-    def __init__(self, services, cones, results_dir='.', stats_path=None,
-                 starting_cone=0, tap_mode='async', verbose=True):
+    def __init__(self, services, cones, result_dir='.', stats_path=None,
+                 starting_cone=0, cone_limit=100000000, tap_mode='async',
+                 verbose=True):
         """
         """
         self._services = self._read_if_file(services)
         self._cones = self._read_if_file(cones)
-        self._results_dir = results_dir
+        self._result_dir = result_dir
         self._stats_path = stats_path
         self._starting_cone = int(starting_cone)
+        self._cone_limit = int(cone_limit)
         self._tap_mode = tap_mode
         self._verbose = verbose
 
@@ -41,14 +43,18 @@ class QueryRunner():
 
     def _run_with_cones(self):
         cone_index = 0
+        cones_run = 0
         for cone in self._cones:
             if cone_index >= self._starting_cone:
+                cones_run += 1
+                if cones_run > self._cone_limit:
+                    break
                 for service in self._services:
                     # Don't use the previous results upon new exception.
                     query = None
                     try:
                         query = Query(service, (cone['ra'], cone['dec']),
-                                      cone['radius'], self._results_dir,
+                                      cone['radius'], self._result_dir,
                                       tap_mode=self._tap_mode,
                                       verbose=self._verbose)
                         query.run()
@@ -68,7 +74,7 @@ class QueryRunner():
     def _run_services_only(self):
         for service in self._services:
             try:
-                query = Query(service, None, None, self._results_dir,
+                query = Query(service, None, None, self._result_dir,
                               tap_mode=self._tap_mode,
                               verbose=self._verbose)
                 query.run()

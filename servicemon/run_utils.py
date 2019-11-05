@@ -17,7 +17,8 @@ class Runner():
     }
 
     conelist_defaults = {
-        'start_index': 0
+        'start_index': 0,
+        'cone_limit': 100000000
     }
 
     def _apply_query_defaults(self, parsed_args, defaults):
@@ -37,6 +38,8 @@ class Runner():
         parser.add_argument('-n', '--norun', dest='norun', action='store_true',
                             help='Display summary of command arguments without'
                             'performing any actions')
+        parser.add_argument('-r', '--result-dir', dest='result_dir', default='results',
+                            help='The directory in which to put query result files.')
         parser.add_argument('-v', '--verbose', dest='verbose',
                             action='store_true',
                             help='Print additional information to stdout')
@@ -99,7 +102,12 @@ class Runner():
             f' Default={self.conegen_defaults["max_radius"]}')
 
         cone_file = query.add_argument_group()
-        cone_file.add_argument('--start-index', type=int)
+        cone_file.add_argument(
+            '--start-index', type=int, help='Start with this cone in cone file'
+            f' Default={self.conelist_defaults["start_index"]}')
+        cone_file.add_argument(
+            '--cone-limit', type=int, help='Maximum number of cones to query'
+            f' Default={self.conelist_defaults["cone_limit"]}')
 
         return parser
 
@@ -187,20 +195,21 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
                                   filename=pa.output)
 
     def replay(self, pa):
-        qr = QueryRunner(pa.file, None, results_dir='results',
+        qr = QueryRunner(pa.file, None, result_dir='results',
                          stats_path=pa.output, tap_mode=pa.tap_mode,
                          verbose=pa.verbose)
         qr.run()
 
     def query_from_cone_file(self, pa):
-        qr = QueryRunner(pa.services, pa.cone_file, results_dir='results',
+        qr = QueryRunner(pa.services, pa.cone_file, result_dir='results',
                          stats_path=pa.output, starting_cone=pa.start_index,
+                         cone_limit=pa.cone_limit,
                          tap_mode=pa.tap_mode, verbose=pa.verbose)
         qr.run()
 
     def query_with_cone_gen(self, pa):
         random_cones = Cone.generate_random(pa.num_cones, pa.min_radius, pa.max_radius)
-        qr = QueryRunner(pa.services, random_cones, results_dir='results',
+        qr = QueryRunner(pa.services, random_cones, result_dir='results',
                          stats_path=pa.output, tap_mode=pa.tap_mode,
                          verbose=pa.verbose)
         qr.run()
