@@ -195,13 +195,13 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
                                   filename=pa.output)
 
     def replay(self, pa):
-        qr = QueryRunner(pa.file, None, result_dir='results',
+        qr = QueryRunner(pa.file, None, result_dir=pa.result_dir,
                          stats_path=pa.output, tap_mode=pa.tap_mode,
                          verbose=pa.verbose)
         qr.run()
 
     def query_from_cone_file(self, pa):
-        qr = QueryRunner(pa.services, pa.cone_file, result_dir='results',
+        qr = QueryRunner(pa.services, pa.cone_file, result_dir=pa.result_dir,
                          stats_path=pa.output, starting_cone=pa.start_index,
                          cone_limit=pa.cone_limit,
                          tap_mode=pa.tap_mode, verbose=pa.verbose)
@@ -209,7 +209,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
 
     def query_with_cone_gen(self, pa):
         random_cones = Cone.generate_random(pa.num_cones, pa.min_radius, pa.max_radius)
-        qr = QueryRunner(pa.services, random_cones, result_dir='results',
+        qr = QueryRunner(pa.services, random_cones, result_dir=pa.result_dir,
                          stats_path=pa.output, tap_mode=pa.tap_mode,
                          verbose=pa.verbose)
         qr.run()
