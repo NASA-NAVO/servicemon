@@ -18,7 +18,7 @@ class QueryRunner():
 
     def __init__(self, services, cones, result_dir='.', stats_path=None,
                  starting_cone=0, cone_limit=100000000, tap_mode='async',
-                 verbose=True):
+                 use_pyvo=True, verbose=True):
         """
         """
         self._services = self._read_if_file(services)
@@ -28,6 +28,7 @@ class QueryRunner():
         self._starting_cone = int(starting_cone)
         self._cone_limit = int(cone_limit)
         self._tap_mode = tap_mode
+        self._use_pyvo = use_pyvo
         self._verbose = verbose
 
         if self._stats_path is not None:
@@ -56,6 +57,7 @@ class QueryRunner():
                         query = Query(service, (cone['ra'], cone['dec']),
                                       cone['radius'], self._result_dir,
                                       tap_mode=self._tap_mode,
+                                      use_pyvo=self._use_pyvo,
                                       verbose=self._verbose)
                         query.run()
                     except Exception as e:
@@ -76,6 +78,7 @@ class QueryRunner():
             try:
                 query = Query(service, None, None, self._result_dir,
                               tap_mode=self._tap_mode,
+                              use_pyvo=self._use_pyvo,
                               verbose=self._verbose)
                 query.run()
             except Exception as e:

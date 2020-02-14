@@ -32,6 +32,9 @@ class Runner():
         parser.add_argument('-b', '--batch', dest='batch', action='store_true',
                             help='Catch SIGHUP, SIGQUIT and SIGTERM'
                             ' to allow running in the background')
+        parser.add_argument('-u', '--use-pyvo', dest='use_pyvo', action='store_true',
+                            help='Use PyVO for queries'
+                            ' to allow running in the background')
         parser.add_argument('-t', '--tap-mode', dest='tap_mode',
                             choices={'sync', 'async'}, default='async',
                             help='How to run TAP queries')
@@ -197,6 +200,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
     def replay(self, pa):
         qr = QueryRunner(pa.file, None, result_dir=pa.result_dir,
                          stats_path=pa.output, tap_mode=pa.tap_mode,
+                         use_pyvo=pa.use_pyvo,
                          verbose=pa.verbose)
         qr.run()
 
@@ -204,6 +208,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
         qr = QueryRunner(pa.services, pa.cone_file, result_dir=pa.result_dir,
                          stats_path=pa.output, starting_cone=pa.start_index,
                          cone_limit=pa.cone_limit,
+                         use_pyvo=pa.use_pyvo,
                          tap_mode=pa.tap_mode, verbose=pa.verbose)
         qr.run()
 
@@ -211,6 +216,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
         random_cones = Cone.generate_random(pa.num_cones, pa.min_radius, pa.max_radius)
         qr = QueryRunner(pa.services, random_cones, result_dir=pa.result_dir,
                          stats_path=pa.output, tap_mode=pa.tap_mode,
+                         use_pyvo=pa.use_pyvo,
                          verbose=pa.verbose)
         qr.run()
 

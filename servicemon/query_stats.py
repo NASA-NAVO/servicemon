@@ -5,10 +5,10 @@ from datetime import datetime
 class Interval():
     """
     """
-    def __init__(self, desc):
+    def __init__(self, desc, duration=0):
         self._desc = desc
         self._start_time = time.time()
-        self._end_time = self._start_time
+        self._end_time = self._start_time + duration
 
     def close(self):
         self._end_time = time.time()
@@ -35,7 +35,7 @@ class QueryStats():
     """
     """
     def __init__(self, name, base_name, service_type, access_url, query_params,
-                 result_meta_fields, max_intervals=2):
+                 result_meta_fields, max_intervals=8):
 
         # First save the params needed to define the result structure.
         self._query_params = self._organize_params(query_params)
