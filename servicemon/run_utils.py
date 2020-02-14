@@ -1,5 +1,6 @@
 import sys
 import signal
+import faulthandler
 import warnings
 warnings.filterwarnings("ignore", message='astropy.extern.six will be removed')
 
@@ -226,12 +227,19 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
         print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr,
               flush=True)
 
+    def receiveSIGTERM(self, signalNumber, frame):
+        now = datetime.now()
+        dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+        print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr,
+              flush=True)
+        faulthandler.dump_traceback()
+
     def catch_signals(self):
 
         # register the signals to be caught
         signal.signal(signal.SIGHUP, self.receiveSignal)
         signal.signal(signal.SIGQUIT, self.receiveSignal)
-        signal.signal(signal.SIGTERM, self.receiveSignal)
+        signal.signal(signal.SIGTERM, self.receiveSIGTERM)
 
     def enable_requests_logging(self):
         import logging

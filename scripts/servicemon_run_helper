@@ -1,0 +1,23 @@
+#!/bin/bash
+
+in_dir="${1}"
+sub_dir="${2}"
+out_dir="${3}"
+cone_limit="${4}"
+
+shopt -s nullglob  # With no matches, don't enter loop
+for resource_file in "${in_dir}/${sub_dir}"/*.py; do
+   base_filename=`basename ${resource_file}`
+   resource_name=${base_filename%.py}
+
+   set -x  # print out commands
+   servicemon --use-pyvo --batch --result-dir "${out_dir}" \
+      query \
+      "${in_dir}/${sub_dir}"/"$resource_name".py \
+      "${out_dir}"/"$resource_name"-'%Y-%m-%d-%H-%M'.csv \
+      --cone-file "${in_dir}"/cones-10000-0_05-0_25.py \
+      --cone-limit ${cone_limit} \
+      >> "${out_dir}"/"$resource_name"-`date "+%Y-%m-%d-%H-%M"`_runlog.txt 2>&1
+   set +x
+
+done
