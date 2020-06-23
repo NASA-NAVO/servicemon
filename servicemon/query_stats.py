@@ -49,6 +49,7 @@ class QueryStats():
         self._vals['base_name'] = base_name
         self._vals['service_type'] = service_type
         self._vals['access_url'] = access_url
+        self._vals['errmsg'] = ':'
 
         self._query_params = self._organize_params(query_params)
         self._vals.update(self._query_params)  # Add the query_params values.
@@ -78,6 +79,14 @@ class QueryStats():
     def result_meta(self):
         return self._result_meta
 
+    @property
+    def errmsg(self):
+        return self._vals['errmsg']
+
+    @errmsg.setter
+    def errmsg(self, val):
+        self._vals['errmsg'] = val
+
     @result_meta.setter
     def result_meta(self, value):
         self._result_meta = value
@@ -97,6 +106,7 @@ class QueryStats():
         cols.append('ADQL')
         cols.append('other_params')
         cols.append('access_url')
+        cols.append('errmsg')
         cols.extend(list(self.result_meta.keys()))
         return cols
 

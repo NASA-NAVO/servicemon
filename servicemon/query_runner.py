@@ -3,7 +3,6 @@ import sys
 import ast
 import csv
 import os
-import traceback
 
 from astropy.table import Table
 from .query import Query
@@ -61,16 +60,14 @@ class QueryRunner():
                                       verbose=self._verbose)
                         query.run()
                     except Exception as e:
-                        traceback.print_exc()
-                        print(f'Query error for cone {cone}, '
-                              f'service {service}: {e}',
-                              file=sys.stderr, flush=True)
+                        msg = f'Query error for cone {cone}, service {service}: {repr(e)}'
+                        query._handle_exc(msg, trace=True)
                     try:
                         self._collect_stats(query.stats)
                     except Exception as e:
-                        print(f'Unable to write stats for cone {cone}, '
-                              f'service {service}: {e}',
-                              file=sys.stderr, flush=True)
+                        msg = f'Unable to write stats for cone {cone}, service {service}: {repr(e)}'
+                        query._handle_exc(msg)
+
             cone_index += 1
 
     def _run_services_only(self):
@@ -82,13 +79,13 @@ class QueryRunner():
                               verbose=self._verbose)
                 query.run()
             except Exception as e:
-                print(f'Query error for service {service}: {e}',
-                      file=sys.stderr, flush=True)
+                msg = f'Query error for service {service}: {repr(e)}'
+                query._handle_exc(msg)
             try:
                 self._collect_stats(query.stats)
             except Exception as e:
-                print(f'Unable to write stats for service {service}: {e}',
-                      file=sys.stderr, flush=True)
+                msg = f'Unable to write stats for service {service}: {repr(e)}'
+                query._handle_exc(msg)
 
     def _collect_stats(self, stats):
         self.stats.append(stats)

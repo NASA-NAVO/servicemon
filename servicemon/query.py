@@ -2,6 +2,7 @@ import os
 import sys
 import pathlib
 import warnings
+import traceback
 
 import html
 import requests
@@ -172,6 +173,13 @@ class Query():
     def _result_meta_attrs(self):
         return ['status', 'size', 'num_rows', 'num_columns']
 
+    def _handle_exc(self, msg, trace=False):
+        self._stats.errmsg = self._stats.errmsg + msg
+        if trace:
+            traceback.print_exc()
+        else:
+            print(msg, file=sys.stderr, flush=True)
+
     def gather_response_metadata(self, response):
         """
         response:  Either an http.client.HTTPResponse or a yyy
@@ -197,8 +205,8 @@ class Query():
             result_meta['num_rows'] = len(t)
             result_meta['num_columns'] = len(t.columns)
         except Exception as e:
-            print(f'In {self._query_name}, error reading result table: {e}',
-                  file=sys.stderr, flush=True)
+            msg = f'In {self._query_name}, error reading result table: {repr(e)}'
+            self._handle_exc(msg)
         finally:
             self._stats.result_meta = result_meta
 
