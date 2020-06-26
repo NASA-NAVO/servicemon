@@ -22,10 +22,10 @@ def test_params():
     assert rv['ADQL'] == ''
     assert rv['other_params'] == {}
     assert 'int0_desc' in qs.columns()
+    assert 'int0_duration' in qs.columns()
+    assert 'int1_desc' in qs.columns()
     assert 'int1_duration' in qs.columns()
-    assert 'int0_desc' in qs.columns()
-    assert 'int1_duration' in qs.columns()
-    assert 'int2_desc' not in qs.columns()
+    assert 'int8_desc' not in qs.columns()
     assert 'meta1' in qs.columns()
     assert 'meta2' in qs.columns()
 

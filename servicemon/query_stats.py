@@ -5,10 +5,10 @@ from datetime import datetime
 class Interval():
     """
     """
-    def __init__(self, desc):
+    def __init__(self, desc, duration=0):
         self._desc = desc
         self._start_time = time.time()
-        self._end_time = self._start_time
+        self._end_time = self._start_time + duration
 
     def close(self):
         self._end_time = time.time()
@@ -35,7 +35,7 @@ class QueryStats():
     """
     """
     def __init__(self, name, base_name, service_type, access_url, query_params,
-                 result_meta_fields, max_intervals=2):
+                 result_meta_fields, max_intervals=8):
 
         # First save the params needed to define the result structure.
         self._query_params = self._organize_params(query_params)
@@ -49,6 +49,7 @@ class QueryStats():
         self._vals['base_name'] = base_name
         self._vals['service_type'] = service_type
         self._vals['access_url'] = access_url
+        self._vals['errmsg'] = ':'
 
         self._query_params = self._organize_params(query_params)
         self._vals.update(self._query_params)  # Add the query_params values.
@@ -78,6 +79,14 @@ class QueryStats():
     def result_meta(self):
         return self._result_meta
 
+    @property
+    def errmsg(self):
+        return self._vals['errmsg']
+
+    @errmsg.setter
+    def errmsg(self, val):
+        self._vals['errmsg'] = val
+
     @result_meta.setter
     def result_meta(self, value):
         self._result_meta = value
@@ -97,6 +106,7 @@ class QueryStats():
         cols.append('ADQL')
         cols.append('other_params')
         cols.append('access_url')
+        cols.append('errmsg')
         cols.extend(list(self.result_meta.keys()))
         return cols
 

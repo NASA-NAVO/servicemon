@@ -1,5 +1,6 @@
 import sys
 import signal
+import faulthandler
 import warnings
 warnings.filterwarnings("ignore", message='astropy.extern.six will be removed')
 
@@ -31,6 +32,9 @@ class Runner():
 
         parser.add_argument('-b', '--batch', dest='batch', action='store_true',
                             help='Catch SIGHUP, SIGQUIT and SIGTERM'
+                            ' to allow running in the background')
+        parser.add_argument('-u', '--use-pyvo', dest='use_pyvo', action='store_true',
+                            help='Use PyVO for queries'
                             ' to allow running in the background')
         parser.add_argument('-t', '--tap-mode', dest='tap_mode',
                             choices={'sync', 'async'}, default='async',
@@ -197,6 +201,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
     def replay(self, pa):
         qr = QueryRunner(pa.file, None, result_dir=pa.result_dir,
                          stats_path=pa.output, tap_mode=pa.tap_mode,
+                         use_pyvo=pa.use_pyvo,
                          verbose=pa.verbose)
         qr.run()
 
@@ -204,6 +209,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
         qr = QueryRunner(pa.services, pa.cone_file, result_dir=pa.result_dir,
                          stats_path=pa.output, starting_cone=pa.start_index,
                          cone_limit=pa.cone_limit,
+                         use_pyvo=pa.use_pyvo,
                          tap_mode=pa.tap_mode, verbose=pa.verbose)
         qr.run()
 
@@ -211,6 +217,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
         random_cones = Cone.generate_random(pa.num_cones, pa.min_radius, pa.max_radius)
         qr = QueryRunner(pa.services, random_cones, result_dir=pa.result_dir,
                          stats_path=pa.output, tap_mode=pa.tap_mode,
+                         use_pyvo=pa.use_pyvo,
                          verbose=pa.verbose)
         qr.run()
 
@@ -220,12 +227,19 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
         print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr,
               flush=True)
 
+    def receiveSIGTERM(self, signalNumber, frame):
+        now = datetime.now()
+        dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+        print(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr,
+              flush=True)
+        faulthandler.dump_traceback()
+
     def catch_signals(self):
 
         # register the signals to be caught
         signal.signal(signal.SIGHUP, self.receiveSignal)
         signal.signal(signal.SIGQUIT, self.receiveSignal)
-        signal.signal(signal.SIGTERM, self.receiveSignal)
+        signal.signal(signal.SIGTERM, self.receiveSIGTERM)
 
     def enable_requests_logging(self):
         import logging

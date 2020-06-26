@@ -2,9 +2,13 @@ import os
 import sys
 import pathlib
 import warnings
+import traceback
 
 import html
 import requests
+
+from codetiming import Timer
+import pyvo as vo
 
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
@@ -32,7 +36,13 @@ class Query():
     """
 
     def __init__(self, service, coords, radius, out_dir, use_subdir=True,
-                 agent='NAVO-servicemon', tap_mode='async', verbose=False):
+                 agent='NAVO-servicemon', tap_mode='async', use_pyvo=True,
+                 verbose=False):
+        self._use_pyvo = use_pyvo
+
+        self._timer = Timer('query_total', logger=None)
+        self._timer.timers.clear()
+
         self.__agent = agent
         self._tap_mode = tap_mode
         self._service = service
@@ -70,23 +80,36 @@ class Query():
         return self._stats
 
     def run(self):
-        if self._service_type == 'cone':
-            response = self.do_cone_query()
-            self.stream_to_file(response)
-        if self._service_type == 'xcone':
-            response = self.do_xcone_query()
-            self.stream_to_file(response)
-        elif self._service_type == 'tap':
-            tap_service = TapPlusNavo(url=self._access_url, agent=self.__agent)
+        with self._timer:
+            if self._service_type == 'cone':
+                response = self.do_cone_query()
+                self.stream_to_file(response)
+            if self._service_type == 'xcone':
+                response = self.do_xcone_query()
+                self.stream_to_file(response)
+            elif self._service_type == 'tap':
+                if self._use_pyvo:
+                    tap_service = vo.dal.TAPService(self._access_url)
+                    if self._tap_mode == 'async':
+                        response = self.do_tap_query_async_pyvo(tap_service)
+                    else:
+                        response = self.do_tap_query_pyvo(tap_service)
+                    self.stream_to_file(response)
 
-            if self._tap_mode == 'async':
-                response = self.do_tap_query_async(tap_service)
-            else:
-                response = self.do_tap_query(tap_service)
-
-            self.stream_tap_to_file(response)
+                else:
+                    tap_service = TapPlusNavo(url=self._access_url, agent=self.__agent)
+                    if self._tap_mode == 'async':
+                        response = self.do_tap_query_async(tap_service)
+                    else:
+                        response = self.do_tap_query(tap_service)
+                    self.stream_tap_to_file(response)
 
         self.gather_response_metadata(response)
+
+    @time_this('do_query')
+    def do_tap_query_async_pyvo(self, tap_service):
+        response = tap_service.run_async_timed(self._adql, response_only=True)
+        return response
 
     @time_this('do_query')
     def do_tap_query_async(self, tap_service):
@@ -130,7 +153,7 @@ class Query():
     def stream_to_file(self, response):
         os.makedirs(os.path.dirname(self._filename), exist_ok=True)
         with open(self._filename, 'wb+') as fd:
-            for chunk in response.iter_content(chunk_size=128):
+            for chunk in response.iter_content(chunk_size=8096):
                 fd.write(chunk)
 
     def compute_headers(self):
@@ -150,13 +173,25 @@ class Query():
     def _result_meta_attrs(self):
         return ['status', 'size', 'num_rows', 'num_columns']
 
+    def _handle_exc(self, msg, trace=False):
+        self._stats.errmsg = self._stats.errmsg + msg
+        if trace:
+            traceback.print_exc()
+        else:
+            print(msg, file=sys.stderr, flush=True)
+
     def gather_response_metadata(self, response):
         """
         response:  Either an http.client.HTTPResponse or a yyy
         """
+        # Add timings to stats intervals.
+        timers = self._timer.timers
+        for items in timers.items():
+            self._stats.add_interval(Interval(items[0], items[1]))
+
         result_meta = dict.fromkeys(self._result_meta_attrs())
 
-        if self._service_type == 'cone':
+        if self._service_type == 'cone' or self._use_pyvo:
             result_meta['status'] = response.status_code
         elif self._service_type == 'tap':
             result_meta['status'] = response.status
@@ -170,8 +205,8 @@ class Query():
             result_meta['num_rows'] = len(t)
             result_meta['num_columns'] = len(t.columns)
         except Exception as e:
-            print(f'In {self._query_name}, error reading result table: {e}',
-                  file=sys.stderr, flush=True)
+            msg = f'In {self._query_name}, error reading result table: {repr(e)}'
+            self._handle_exc(msg)
         finally:
             self._stats.result_meta = result_meta
 

@@ -1,0 +1,28 @@
+#!/bin/bash
+
+in_dir="${1:-input}"
+out_dir="${2:-results}"
+cone_limit="${3:-100000000}"
+
+if [ "$#" -lt 3 ]; then
+    printf "Warning:  Some defaults being used.\n"
+    printf "\nSuggested syntax: `basename $0` [in_dir] [out_dir] [cone_limit] \n"
+    printf "in_dir: ${in_dir}\nout_dir: ${out_dir}\ncone_limit: ${cone_limit}\n\n"
+fi
+
+mkdir -p "${out_dir}"
+
+shopt -s nullglob  # With no matches, don't enter loop
+for in_sub_dir in ${in_dir}/*; do
+    if [ -d "${in_sub_dir}" ]; then
+      sub_dir_base=`basename ${in_sub_dir}`
+      PYTHONFAULTHANDLER=true servicemon_run_helper "${in_dir}" "${sub_dir_base}" "${out_dir}" "${cone_limit}" \
+         >> "${out_dir}"/"${sub_dir_base}"-`date "+%Y-%m-%d-%H-%M"`_comlog.txt 2>&1 &
+    fi
+done
+
+
+
+
+
+
