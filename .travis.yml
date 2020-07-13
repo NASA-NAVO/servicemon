@@ -58,7 +58,7 @@ env:
         # If you want to ignore certain flake8 errors, you can list them
         # in FLAKE8_OPT, for example:
         # - FLAKE8_OPT='--ignore=E501'
-        - FLAKE8_OPT=''
+        - FLAKE8_OPT='--select=E101,W191,W291,W292,W293,W391,E111,E112,E113,E30,E502,E722,E901,E902,E999,F822,F823'
 
     matrix:
         # Make sure that egg_info works without dependencies
