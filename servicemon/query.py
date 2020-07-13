@@ -8,14 +8,13 @@ import html
 import requests
 
 from codetiming import Timer
-import pyvo as vo
 
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astroquery.utils import parse_coordinates
 
-from .navotap.core import TapPlusNavo
 from .query_stats import Interval, QueryStats
+from .pyvo_wrappers import TAPServiceSM
 
 
 def time_this(interval_name):
@@ -88,48 +87,19 @@ class Query():
                 response = self.do_xcone_query()
                 self.stream_to_file(response)
             elif self._service_type == 'tap':
-                if self._use_pyvo:
-                    tap_service = vo.dal.TAPService(self._access_url)
-                    if self._tap_mode == 'async':
-                        response = self.do_tap_query_async_pyvo(tap_service)
-                    else:
-                        response = self.do_tap_query_pyvo(tap_service)
-                    self.stream_to_file(response)
-
+                tap_service = TAPServiceSM(self._access_url)
+                if self._tap_mode == 'async':
+                    response = self.do_tap_query_async_pyvo(tap_service)
                 else:
-                    tap_service = TapPlusNavo(url=self._access_url, agent=self.__agent)
-                    if self._tap_mode == 'async':
-                        response = self.do_tap_query_async(tap_service)
-                    else:
-                        response = self.do_tap_query(tap_service)
-                    self.stream_tap_to_file(response)
+                    # TBD - this needs to be implemented
+                    response = self.do_tap_query_pyvo(tap_service)
+                self.stream_to_file(response)
 
         self.gather_response_metadata(response)
 
     @time_this('do_query')
     def do_tap_query_async_pyvo(self, tap_service):
         response = tap_service.run_async_timed(self._adql, response_only=True)
-        return response
-
-    @time_this('do_query')
-    def do_tap_query_async(self, tap_service):
-        job = tap_service.launch_job_async(self._adql, background=True,
-                                           verbose=self._verbose)
-        job.wait_for_job_end()
-
-        # Adapted from job.__load_async_job_results() and
-        # utils.read_http_response().
-        # TBD: Loses the part of utils.read_http_response() that corrects
-        # units.
-        subContext = "async/" + str(job.jobid) + "/results/result"
-        response = job.connHandler.execute_get(subContext)
-
-        return response
-
-    @time_this('do_query')
-    def do_tap_query(self, tap_service):
-        job, response = tap_service.launch_job(self._adql,
-                                               verbose=self._verbose)
         return response
 
     @time_this('do_query')
