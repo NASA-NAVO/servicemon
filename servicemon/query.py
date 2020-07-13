@@ -16,6 +16,7 @@ from astroquery.utils import parse_coordinates
 
 from .navotap.core import TapPlusNavo
 from .query_stats import Interval, QueryStats
+from .pyvo_wrappers import TAPServiceSM
 
 
 def time_this(interval_name):
@@ -89,14 +90,16 @@ class Query():
                 self.stream_to_file(response)
             elif self._service_type == 'tap':
                 if self._use_pyvo:
-                    tap_service = vo.dal.TAPService(self._access_url)
+                    tap_service = TAPServiceSM(self._access_url)
                     if self._tap_mode == 'async':
                         response = self.do_tap_query_async_pyvo(tap_service)
                     else:
+                        # TBD - this needs to be implemented
                         response = self.do_tap_query_pyvo(tap_service)
                     self.stream_to_file(response)
 
                 else:
+                    # TBD - disable this, and remove related docs and code
                     tap_service = TapPlusNavo(url=self._access_url, agent=self.__agent)
                     if self._tap_mode == 'async':
                         response = self.do_tap_query_async(tap_service)
