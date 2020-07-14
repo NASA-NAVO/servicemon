@@ -43,20 +43,23 @@ def test_global_args(capsys):
     assert args.tap_mode == 'sync'
     assert not args.norun
     assert not args.verbose
+    assert not args.save_results
 
-    args = parse_args(['--batch', '--norun', '--verbose',
+    args = parse_args(['--batch', '--norun', '--verbose', '--save-results',
                        'replay', 'testfile.csv', 'outfile.csv'])
     assert args.batch
     assert args.tap_mode == 'async'
     assert args.norun
     assert args.verbose
+    assert args.save_results
 
-    args = parse_args(['-b', '-n', '-v',
+    args = parse_args(['-b', '-n', '-v', '-s',
                        'replay', 'testfile.csv', 'outfile.csv'])
     assert args.batch
     assert args.tap_mode == 'async'
     assert args.norun
     assert args.verbose
+    assert args.save_results
 
     check_err_msg(capsys, ['replay', '-b', 'testfile.csv', 'outfile.csv'],
                   'error: unrecognized arguments: -b')
