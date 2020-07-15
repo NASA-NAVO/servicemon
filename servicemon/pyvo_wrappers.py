@@ -18,9 +18,61 @@ class TAPServiceSM(TAPService):
     Specialization of TAPService to support timing.
     """
 
+    def run_sync_timed(
+            self, query, language="ADQL", maxrec=None, uploads=None,
+            streamable_response=False,
+            **keywords):
+        """
+        runs sync query and returns its result
+
+        Parameters
+        ----------
+        query : str
+            The query
+        language : str
+            specifies the query language, default ADQL.
+            useful for services which allow to use the backend query language.
+        maxrec : int
+            the maximum records to return. defaults to the service default
+        uploads : dict
+            a mapping from table names to objects containing a votable
+        streamable_response: bool
+            If False (default) return TapResult, otherwise return
+            a streamable response.
+
+        Returns
+        -------
+        TAPResults
+            the query result
+
+        See Also
+        --------
+        TAPResults
+        """
+        tap_query = self.create_query(
+            query, language=language, maxrec=maxrec, uploads=uploads,
+            **keywords)
+
+        if streamable_response:
+            # This block adapted from DALQuery.execute_stream()
+            # to get a response instead of a response.raw.
+
+            result = tap_query.submit()
+
+            # Not clear if we want to catch this for the servicemon use case.
+            try:
+                result.raise_for_status()
+            except requests.RequestException as ex:
+                raise DALServiceError.from_except(ex)
+
+        else:
+            result = tap_query.execute()
+
+        return result
+
     def run_async_timed(
             self, query, language="ADQL", maxrec=None, uploads=None,
-            response_only=False, delete=False, **keywords):
+            streamable_response=False, delete=False, **keywords):
         """
         runs async query and returns its result
          Parameters
@@ -34,7 +86,7 @@ class TAPServiceSM(TAPService):
             the maximum records to return. defaults to the service default
         uploads : dict
             a mapping from table names to objects containing a votable
-        response_only: bool
+        streamable_response: bool
             If False (default) return TapResult, otherwise return
             a streamable response.
          Returns
@@ -70,7 +122,7 @@ class TAPServiceSM(TAPService):
                 raise DALQueryError("Query Error", job._job.phase, job.url)
 
         with Timer('fetch_response', logger=None):
-            if response_only:
+            if streamable_response:
                 result = job.get_result_response()
             else:
                 result = job.fetch_result()
@@ -226,8 +278,12 @@ class AsyncTAPSM(AsyncTAPJob):
             response = self._session.get(self.result_uri, stream=True)
             response.raise_for_status()
         except requests.RequestException as ex:
-            self._update()
-            # we propably got a 404 because of a query error. raise with error msg
+            # Got rid of an _update() that was here because it does yet another query.
+            # It was probably there to ensure that _phase is set, but that's hopeless if we're
+            # getting errors here.
+
+            # We can add specialized error handling here if needed.
             self.raise_if_error()
             raise DALServiceError.from_except(ex, self.url)
+
         return response

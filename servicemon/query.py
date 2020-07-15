@@ -99,7 +99,12 @@ class Query():
 
     @time_this('do_query')
     def do_tap_query_async_pyvo(self, tap_service):
-        response = tap_service.run_async_timed(self._adql, response_only=True)
+        response = tap_service.run_async_timed(self._adql, streamable_response=True)
+        return response
+
+    @time_this('do_query')
+    def do_tap_query_pyvo(self, tap_service):
+        response = tap_service.run_sync_timed(self._adql, streamable_response=True)
         return response
 
     @time_this('do_query')
@@ -111,13 +116,6 @@ class Query():
     def do_xcone_query(self):
         response = self.do_request(self._access_url)
         return response
-
-    @time_this('stream_to_file')
-    def stream_tap_to_file(self, response):
-        result_content = response.read()
-        os.makedirs(os.path.dirname(self._filename), exist_ok=True)
-        with open(self._filename, 'wb+') as fd:
-            fd.write(result_content)
 
     @time_this('stream_to_file')
     def stream_to_file(self, response):

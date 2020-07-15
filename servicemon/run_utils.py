@@ -34,13 +34,14 @@ class Runner():
                             help='Catch SIGHUP, SIGQUIT and SIGTERM'
                             ' to allow running in the background')
         parser.add_argument('-s', '--save-results', dest='save_results', action='store_true',
-                            help='Save the query result data files.  Without this argument,'
-                            'the query result files will be deleted after metadata is gathered.')
+                            help='Save the query result data files.  Without this argument, '
+                            'the query result file will be deleted after metadata is gathered '
+                            'for the query.')
         parser.add_argument('-t', '--tap-mode', dest='tap_mode',
                             choices={'sync', 'async'}, default='async',
-                            help='How to run TAP queries')
+                            help='How to run TAP queries (default=async)')
         parser.add_argument('-n', '--norun', dest='norun', action='store_true',
-                            help='Display summary of command arguments without'
+                            help='Display summary of command arguments without '
                             'performing any actions')
         parser.add_argument('-r', '--result-dir', dest='result_dir', default='results',
                             help='The directory in which to put query result files.')
