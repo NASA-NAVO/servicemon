@@ -35,9 +35,9 @@ class Query():
     """
 
     def __init__(self, service, coords, radius, out_dir, use_subdir=True,
-                 agent='NAVO-servicemon', tap_mode='async', use_pyvo=True,
+                 agent='NAVO-servicemon', tap_mode='async', save_results=True,
                  verbose=False):
-        self._use_pyvo = use_pyvo
+        self._save_results = save_results
 
         self._timer = Timer('query_total', logger=None)
         self._timer.timers.clear()
@@ -99,7 +99,12 @@ class Query():
 
     @time_this('do_query')
     def do_tap_query_async_pyvo(self, tap_service):
-        response = tap_service.run_async_timed(self._adql, response_only=True)
+        response = tap_service.run_async_timed(self._adql, streamable_response=True)
+        return response
+
+    @time_this('do_query')
+    def do_tap_query_pyvo(self, tap_service):
+        response = tap_service.run_sync_timed(self._adql, streamable_response=True)
         return response
 
     @time_this('do_query')
@@ -111,13 +116,6 @@ class Query():
     def do_xcone_query(self):
         response = self.do_request(self._access_url)
         return response
-
-    @time_this('stream_to_file')
-    def stream_tap_to_file(self, response):
-        result_content = response.read()
-        os.makedirs(os.path.dirname(self._filename), exist_ok=True)
-        with open(self._filename, 'wb+') as fd:
-            fd.write(result_content)
 
     @time_this('stream_to_file')
     def stream_to_file(self, response):
@@ -160,11 +158,7 @@ class Query():
             self._stats.add_interval(Interval(items[0], items[1]))
 
         result_meta = dict.fromkeys(self._result_meta_attrs())
-
-        if self._service_type == 'cone' or self._use_pyvo:
-            result_meta['status'] = response.status_code
-        elif self._service_type == 'tap':
-            result_meta['status'] = response.status
+        result_meta['status'] = response.status_code
 
         try:
             with warnings.catch_warnings():
@@ -174,6 +168,9 @@ class Query():
             result_meta['size'] = os.path.getsize(self._filename)
             result_meta['num_rows'] = len(t)
             result_meta['num_columns'] = len(t.columns)
+
+            if not self._save_results:
+                os.remove(self._filename)
         except Exception as e:
             msg = f'In {self._query_name}, error reading result table: {repr(e)}'
             self._handle_exc(msg)
