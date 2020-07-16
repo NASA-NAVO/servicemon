@@ -91,7 +91,6 @@ class Query():
                 if self._tap_mode == 'async':
                     response = self.do_tap_query_async_pyvo(tap_service)
                 else:
-                    # TBD - this needs to be implemented
                     response = self.do_tap_query_pyvo(tap_service)
                 self.stream_to_file(response)
 
