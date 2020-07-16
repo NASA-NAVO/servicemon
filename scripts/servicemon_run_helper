@@ -1,23 +1,36 @@
 #!/bin/bash
 
-in_dir="${1}"
-sub_dir="${2}"
-out_dir="${3}"
-cone_limit="${4}"
+# Gather and format the arguments.
+if [[ $1 == 0 ]] ; then
+   SAVE_RESULTS=""
+else
+   SAVE_RESULTS="--save-results"
+fi
+if [[ $2 == 0 ]] ; then
+   CONE_LIMIT=""
+else
+   CONE_LIMIT="--cone-limit $2"
+fi
+TAP_MODE="${3}"
+IN_DIR="${4}"
+CONE_FILE="${5}"
+OUT_DIR="${6}"
+SUB_DIR="${7}"
 
 shopt -s nullglob  # With no matches, don't enter loop
-for resource_file in "${in_dir}/${sub_dir}"/*.py; do
+for resource_file in "${IN_DIR}/${SUB_DIR}"/*.py; do
    base_filename=`basename ${resource_file}`
    resource_name=${base_filename%.py}
 
    set -x  # print out commands
-   servicemon --use-pyvo --batch --result-dir "${out_dir}" \
+   servicemon --batch --result-dir "${OUT_DIR}" \
+      ${SAVE_RESULTS} --tap-mode ${TAP_MODE} \
       query \
-      "${in_dir}/${sub_dir}"/"$resource_name".py \
-      "${out_dir}"/"$resource_name"-'%Y-%m-%d-%H-%M'.csv \
-      --cone-file "${in_dir}"/cones-10000-0_05-0_25.py \
-      --cone-limit ${cone_limit} \
-      >> "${out_dir}"/"$resource_name"-`date "+%Y-%m-%d-%H-%M"`_runlog.txt 2>&1
+      "${IN_DIR}/${SUB_DIR}"/"$resource_name".py \
+      "${OUT_DIR}"/"$resource_name"-'%Y-%m-%d-%H-%M'.csv \
+      --cone-file "${CONE_FILE}" \
+      ${CONE_LIMIT} \
+      >> "${OUT_DIR}"/"$resource_name"-`date "+%Y-%m-%d-%H-%M"`_runlog.txt 2>&1
    set +x
 
 done
