@@ -105,7 +105,7 @@ release = package.__version__
 #html_theme = None
 
 
-html_theme = "y"
+#html_theme = "y"
 
 
 # Custom sidebar templates, maps document names to template names.
