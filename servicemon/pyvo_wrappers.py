@@ -117,7 +117,6 @@ class TAPServiceSM(TAPService):
             job = job.wait()
 
         with Timer('raise_if_error', logger=None):
-            #job.raise_if_error()
             if job._job.phase in {"ERROR", "ABORTED"}:
                 raise DALQueryError("Query Error", job._job.phase, job.url)
 

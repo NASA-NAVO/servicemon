@@ -19,7 +19,7 @@
     {'base_name': 'STScI_ObsTAP',
      'service_type': 'tap',
      'access_url': 'http://vao.stsci.edu/CAOMTAP/TapService.aspx',
-     'adql':'''
+     'adql': '''
     SELECT *
     FROM ivoa.obscore
     WHERE
