@@ -2,7 +2,7 @@
     {'base_name': 'PanSTARRS',
      'service_type': 'tap',
      'access_url': 'http://vao.stsci.edu/PS1DR2/tapservice.aspx',
-     'adql':'''
+     'adql': '''
    SELECT objID, RAMean, DecMean, nDetections, ng, nr, ni, nz, ny, gMeanPSFMag,
    rMeanPSFMag, iMeanPSFMag, zMeanPSFMag, yMeanPSFMag
    FROM dbo.MeanObjectView
