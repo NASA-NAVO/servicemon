@@ -4,6 +4,7 @@
 # NOTE: The configuration for the package, including the name, version, and
 # other information are set in the setup.cfg file.
 
+import glob
 import os
 import sys
 
@@ -63,6 +64,10 @@ if 'build_docs' in sys.argv or 'build_sphinx' in sys.argv:
     print(DOCS_HELP)
     sys.exit(1)
 
+# Treat everything in scripts except README* as a script to be installed
+scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
+           if not os.path.basename(fname).startswith('README')]
+
 VERSION_TEMPLATE = """
 # Note that we need to fall back to the hard-coded version if either
 # setuptools_scm can't be imported or setuptools_scm can't determine the
@@ -75,4 +80,5 @@ except Exception:
 """.lstrip()
 
 setup(use_scm_version={'write_to': os.path.join('servicemon', 'version.py'),
-                       'write_to_template': VERSION_TEMPLATE})
+                       'write_to_template': VERSION_TEMPLATE},
+      scripts=scripts)
