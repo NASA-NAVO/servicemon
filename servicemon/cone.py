@@ -2,6 +2,7 @@ import os
 import sys
 import ast
 import pprint
+from argparse import ArgumentParser
 
 import numpy as np
 from numpy.random import random_sample as rand
@@ -103,3 +104,45 @@ class Cone:
         cones.reverse()
 
         Cone.write_cones(cones, outfile)
+
+
+conegen_defaults = {
+    'min_radius': 0,
+    'max_radius': 0.25
+}
+
+
+def _apply_query_defaults(parsed_args, defaults):
+    for k in defaults:
+        if getattr(parsed_args, k) is None:
+            setattr(parsed_args, k, defaults[k])
+
+
+def sm_conegen(input_args=None):
+    args = _parse_cone_args(input_args)
+
+    Cone.write_random(args.num_cones, args.min_radius, args.max_radius,
+                      filename=args.outfile)
+
+
+def _parse_cone_args(input_args):
+    parser = ArgumentParser(description='Generate random cones.')
+
+    parser.add_argument(
+        'outfile', help="Name of the output file to contain the cones. ")
+    parser.add_argument(
+        '--num_cones', type=int, metavar='num_cones', required=True,
+        help='Number of cones to generate')
+    parser.add_argument(
+        '--min_radius', type=float, metavar='min_radius',
+        help='Minimum radius (deg).'
+        f' Default={conegen_defaults["min_radius"]}')
+    parser.add_argument(
+        '--max_radius', type=float, metavar='max_radius',
+        help='Maximum radius (deg).'
+        f' Default={conegen_defaults["max_radius"]}')
+
+    args = parser.parse_args(input_args)
+
+    _apply_query_defaults(args, conegen_defaults)
+    return args

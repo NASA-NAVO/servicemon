@@ -1,0 +1,157 @@
+#!/bin/bash
+
+#############################################################
+
+usage()
+{
+cat << EOF >&2
+usage: sm_run_all input_dir
+                  [-h]
+                  [-r result_dir]
+                  [-l plugin_dir_or_file]
+                  [-w writer] [-s]
+                  [-t {async,sync}] [-n] [-v]
+                  [--num_cones num_cones | --cone_file cone_file]
+                  [--min_radius MIN_RADIUS] [--max_radius MAX_RADIUS]
+                  [--start_index start_index] [--cone_limit cone_limit]
+
+EOF
+
+}
+
+#############################################################
+
+help()
+{
+usage
+cat << EOF >&2
+
+Measure performance on all the specified services in the input_dir directory tree.
+
+positional arguments:
+  input_dir             Directory tree containing the input specifications.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r result_dir, --result_dir result_dir
+                        The directory in which to put query result files.
+  -l plugin_dir_or_file, --load_plugins plugin_dir_or_file
+                        Directory or file from which to load user plug-ins.
+  -w writer, --writer writer
+                        Name and kwargs of a writer plug-in to use.Format is
+                        writer_name[:arg1=val1[,arg2=val2...]] May appear
+                        multiple times to specify multiple writers. May
+                        contain Python datetime format elements which will be
+                        substituted with appropriate elements of the current
+                        time (e.g., results-'%m-%d-%H:%M:%S'.py)
+  -s, --save_results    Save the query result data files. Without this
+                        argument, the query result file will be deleted after
+                        metadata is gathered for the query.
+  -t {async,sync}, --tap_mode {async,sync}
+                        How to run TAP queries (default=async)
+  -n, --norun           Display summary of command arguments without
+                        performing any actions
+  -v, --verbose         Print additional information to stdout
+  --num_cones num_cones
+                        Number of cones to generate
+  --cone_file cone_file
+                        Path of the file containing the individual query
+                        inputs.
+
+  --min_radius MIN_RADIUS
+                        Minimum radius (deg). Default=0
+  --max_radius MAX_RADIUS
+                        Maximum radius (deg). Default=0.25
+
+  --start_index start_index
+                        Start with this cone in cone file Default=0
+  --cone_limit cone_limit
+                        Maximum number of cones to query Default=100000000
+EOF
+}
+
+#############################################################
+
+
+run_all_in_dir()
+{
+# In series, run all Python "services" files in the SUB_DIR.
+# IN_DIR and SUB_DIR are already defined.shopt -s nullglob  # With no matches, don't enter loop
+
+for resource_file in "${IN_DIR}/${SUB_DIR}"/*.py; do
+   base_filename=`basename ${resource_file}`
+   resource_name=${base_filename%.py}
+
+   set -x  # print out commands
+   sm_query ${resource_file} $@ \
+      >> "${RESULT_DIR}"/"$resource_name"-`date "+%Y-%m-%d-%H-%M"`_runlog.txt 2>&1
+   set +x
+
+done
+
+}
+
+#############################################################
+
+show_args()
+{
+   for (( i=1; i < "$#"; i++ )); do
+      echo arg ${i} is ${!i}
+   done
+}
+
+#############################################################
+
+# Main Program...
+
+# Global variables
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PYTHONFAULTHANDLER=true
+
+# Ensure first arg is an input directory, and handle help.
+if [[ ${1} == "--help" || ${1} == "-h" ]]; then
+   help
+   exit 0
+elif [[ ${1} = -* ]]; then
+   echo `basename $0`: error:  1st argument must be an input_directory.
+   usage
+   exit 1
+elif [ -d ${1} ]; then
+   IN_DIR=${1}
+fi
+if [ -z ${IN_DIR} ]; then
+   echo `basename $0`: error:  1st argument must be an input_directory that exists.
+   usage
+   exit 1
+fi
+
+# Find result directory
+for (( i=2; i < "$#"; i++ )); do
+    if [[ ${!i} == "--result_dir" || ${!i} == "-r" ]]; then
+      next=$((i+1))
+      RESULT_DIR=${!next}
+      break
+    fi
+done
+if [ -z ${RESULT_DIR} ]; then
+   echo error:  --result_dir is required
+   usage
+   exit 1
+fi
+mkdir -p "${RESULT_DIR}"
+
+# Eat the IN_DIR argument.
+shift
+
+# Treat each subdirectory of IN_DIR as containing one or more Python
+# files which define services for an sm_query run.
+# Process the subdirectories in parallel with each other while processing
+# each Python file within a subdirectory in series.
+shopt -s nullglob  # With no matches, don't enter loop
+for in_sub_dir in ${IN_DIR}/*; do
+    if [ -d "${in_sub_dir}" ]; then
+      SUB_DIR=`basename ${in_sub_dir}`
+      run_all_in_dir  $@ \
+         >> "${RESULT_DIR}"/"${SUB_DIR}"-`date "+%Y-%m-%d-%H-%M"`_comlog.txt 2>&1 &
+    fi
+done

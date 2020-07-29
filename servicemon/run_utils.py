@@ -7,11 +7,16 @@ from argparse import ArgumentParser
 from datetime import datetime
 from .query_runner import QueryRunner
 from .cone import Cone
+from .plugin_support import SmPluginSupport, AbstractResultWriter
 
 warnings.filterwarnings("ignore", message='astropy.extern.six will be removed')
 
 
 class Runner():
+
+    def __init__(self):
+        self.writers = []
+        SmPluginSupport.load_builtin_plugins()
 
     conegen_defaults = {
         'min_radius': 0,
@@ -31,6 +36,13 @@ class Runner():
     def _create_parser(self):
         parser = ArgumentParser(description='Measure service performance.')
 
+        parser.add_argument('-l', '--load-plugins', dest='load_plugins',
+                            help='Directory or file from which to load plug-ins.')
+        parser.add_argument('-w', '--writer', dest='writers', action='append',
+                            help="Name and kwargs of a writer plug-in to use."
+                            " May contain Python datetime format elements which will be"
+                            " substituted with appropriate elements of the current time"
+                            " (e.g., conefile-'%%m-%%d-%%H:%%M:%%S'.py)")
         parser.add_argument('-b', '--batch', dest='batch', action='store_true',
                             help='Catch SIGHUP, SIGQUIT and SIGTERM'
                             ' to allow running in the background')
@@ -77,22 +89,12 @@ class Runner():
             description='Replay queries from a previous result file.',
             help='Replay queries from a previous result file.')
         replay.add_argument('file', help='The file to replay.')
-        replay.add_argument(
-            'output', help="Name of the output file to contain the cones. "
-            " May contain Python datetime format elements which will be"
-            " substituted with appropriate elements of the current time"
-            " (e.g., replay-timing-'%%m-%%d-%%H:%%M:%%S'.csv)")
 
         query = sps.add_parser(
             'query', description='Query a list of services',
             help='Query a list of services')
         query.add_argument(
             'services', help='File containing list of services to query')
-        query.add_argument(
-            'output', help="Name of the output file to contain the cones. "
-            " May contain Python datetime format elements which will be"
-            " substituted with appropriate elements of the current time"
-            " (e.g., query-timing-'%%m-%%d-%%H:%%M:%%S'.csv)")
 
         cone_types = query.add_mutually_exclusive_group()
         cone_types.add_argument(
@@ -142,22 +144,36 @@ class Runner():
         if parsed_args.command == 'conegen':
             self._apply_query_defaults(parsed_args, self.conegen_defaults)
 
-        # Substitute time formats in output file name template,
-        # such as '%Y-%m-%d-%H:%M:%S.%f'
-        now = datetime.now()
-        time_outfile = now.strftime(parsed_args.output)
-        parsed_args.output = time_outfile
-
         if parsed_args.verbose or parsed_args.norun:
             self.print_arg_info(parsed_args)
 
         if parsed_args.verbose:
             self.enable_requests_logging()
 
+        # Load plug-ins and prepare writers.
+        if parsed_args.load_plugins is None:
+            SmPluginSupport.load_plugins()
+        else:
+            SmPluginSupport.load_plugins(plugins=parsed_args.load_plugins)
+
+        if parsed_args.writers is None:
+            # Default to the csv_writer and its default output file.
+            parsed_args.writers = ['csv_writer']
+
+        for spec in parsed_args.writers:
+            # Substitute time formats in writer templates,
+            # such as '%Y-%m-%d-%H:%M:%S.%f'
+            now = datetime.now()
+            spec_with_time = now.strftime(spec)
+
+            plugin = AbstractResultWriter.get_plugin_from_spec(spec_with_time)
+            self.writers.append(plugin)
+
         return parsed_args
 
     def print_arg_info(self, args):
         print(f'''
+        TSD UPADTE THIS
 Options:
 batch: {args.batch}
 tap_mode: {args.tap_mode}
@@ -166,12 +182,10 @@ verbose: {args.verbose}''')
 
         if args.command == 'replay':
             print(f'''
-Replaying: {args.file}
-Output: {args.output}''')
+Replaying: {args.file}''')
         elif args.command == 'query':
             print(f'''
-Services: {args.services}
-Output: {args.output}''')
+Services: {args.services}''')
             if args.cone_file is not None:
                 print(f'''
 Cones: {args.cone_file} [{args.start_index}:]''')
@@ -202,14 +216,14 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
 
     def replay(self, pa):
         qr = QueryRunner(pa.file, None, result_dir=pa.result_dir,
-                         stats_path=pa.output, tap_mode=pa.tap_mode,
+                         writers=self.writers, tap_mode=pa.tap_mode,
                          save_results=pa.save_results,
                          verbose=pa.verbose)
         qr.run()
 
     def query_from_cone_file(self, pa):
         qr = QueryRunner(pa.services, pa.cone_file, result_dir=pa.result_dir,
-                         stats_path=pa.output, starting_cone=pa.start_index,
+                         writers=self.writers, starting_cone=pa.start_index,
                          cone_limit=pa.cone_limit,
                          save_results=pa.save_results,
                          tap_mode=pa.tap_mode, verbose=pa.verbose)
@@ -218,7 +232,7 @@ min-radius: {args.min_radius}, max-radius: {args.max_radius}''')
     def query_with_cone_gen(self, pa):
         random_cones = Cone.generate_random(pa.num_cones, pa.min_radius, pa.max_radius)
         qr = QueryRunner(pa.services, random_cones, result_dir=pa.result_dir,
-                         stats_path=pa.output, tap_mode=pa.tap_mode,
+                         writers=self.writers, tap_mode=pa.tap_mode,
                          save_results=pa.save_results,
                          verbose=pa.verbose)
         qr.run()

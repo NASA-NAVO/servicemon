@@ -147,6 +147,9 @@ latex_documents = [('index', project + '.tex', project + u' Documentation',
 man_pages = [('index', project.lower(), project + u' Documentation',
               [author], 1)]
 
+# -- Enable inserting command output into docs ---------------------------------
+
+extensions += ['sphinxcontrib.programoutput']
 
 # -- Options for the edit_on_github extension ---------------------------------
 
