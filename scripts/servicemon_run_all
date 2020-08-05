@@ -20,9 +20,9 @@ Measure performance on all the specified services in the in_dir directory tree.
 
 
 Positional arguments:
-    in_dir             Generate random cones
-    cone_file          Replay queries from a previous result file.
-    out_dir            Query a list of services
+    in_dir             Directory tree containing the input specifications.
+    cone_file          File containing the cones to search.
+    out_dir            Directory in which to store the output files.
 
 Optional arguments:
   -h        Show this help message and exit
