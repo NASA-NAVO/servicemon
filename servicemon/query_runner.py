@@ -3,6 +3,7 @@ import ast
 import csv
 import signal
 import faulthandler
+import platform
 
 from argparse import ArgumentParser
 from datetime import datetime
@@ -324,7 +325,9 @@ def _create_query_argparser():
                         help='The directory in which to put query result files.',
                         metavar='result_dir')
     parser.add_argument('-l', '--load_plugins', dest='load_plugins', metavar='plugin_dir_or_file',
-                        help='Directory or file from which to load user plug-ins.')
+                        help='Directory or file from which to load user plug-ins. '
+                        'If not specified, and there is a "plugins" subdirectory, plugin '
+                        'files will be loaded from there.')
     parser.add_argument('-w', '--writer', dest='writers', action='append',
                         help="Name and kwargs of a writer plug-in to use."
                         "Format is writer_name[:arg1=val1[,arg2=val2...]]"
@@ -387,7 +390,9 @@ def _create_replay_argparser():
                         help='The directory in which to put query result files.',
                         metavar='result_dir')
     parser.add_argument('-l', '--load_plugins', dest='load_plugins', metavar='plugin_dir_or_file',
-                        help='Directory or file from which to load user plug-ins.')
+                        help='Directory or file from which to load user plug-ins. '
+                        'If not specified, and there is a "plugins" subdirectory, plugin '
+                        'files will be loaded from there.')
     parser.add_argument('-w', '--writer', dest='writers', action='append',
                         help="Name and kwargs of a writer plug-in to use."
                         "Format is writer_name[:arg1=val1[,arg2=val2...]]"
@@ -448,9 +453,22 @@ def catch_signals():
     """
 
     # register the signals to be caught
-    signal.signal(signal.SIGHUP, receiveSignal)
-    signal.signal(signal.SIGQUIT, receiveSignal)
-    signal.signal(signal.SIGTERM, receiveSIGTERM)
+    if platform.system() is not 'Windows':
+        try:
+            signal.signal(signal.SIGHUP, receiveSignal)
+        except AttributeError as e:
+            print(f'Warning: unable to add signal.SIGHUP handler: {repr(e)}')
+
+        try:
+            signal.signal(signal.SIGQUIT, receiveSignal)
+        except AttributeError as e:
+            print(f'Warning: unable to add signal.SIGQUIT handler: {repr(e)}')
+
+    # SIGTERM should be available on Windows.
+    try:
+        signal.signal(signal.SIGTERM, receiveSignal)
+    except AttributeError as e:
+        print(f'Warning: unable to add signal.SIGTERM handler: {repr(e)}')
 
 
 def apply_query_defaults(parsed_args, defaults):
