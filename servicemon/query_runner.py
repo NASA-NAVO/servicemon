@@ -453,7 +453,7 @@ def catch_signals():
     """
 
     # register the signals to be caught
-    if platform.system() is not 'Windows':
+    if platform.system() != 'Windows':
         try:
             signal.signal(signal.SIGHUP, receiveSignal)
         except AttributeError as e:
