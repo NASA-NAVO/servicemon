@@ -26,7 +26,7 @@ is installed.
 Overview
 ********
 
-The basic intent of **servicemon** is to execute multiple queries on one or
+The basic intention of **servicemon** is to execute multiple queries on one or
 more VO services and record the timing of each query.  The
 specific query parameters (such as ra, dec and radius) are varied with each
 query.  Those query parameters can be listed in an input file, or randomly
