@@ -170,4 +170,5 @@ after_success:
     #    codecov;
     # fi
 
+# This was added to debug the build issue related to having a tag that specified a dev number
 after_failure: cat .tox/.package/log/.package-3.log
