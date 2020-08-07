@@ -169,3 +169,5 @@ after_success:
     #    pip install codecov;
     #    codecov;
     # fi
+
+after_failure: cat .tox/.package/log/.package-3.log
