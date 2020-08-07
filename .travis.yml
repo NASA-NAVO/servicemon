@@ -171,4 +171,4 @@ after_success:
     # fi
 
 # This was added to debug the build issue related to having a tag that specified a dev #
-after_failure: cat .tox/.package/log/.package-3.log
+# after_failure: cat .tox/.package/log/.package-3.log
