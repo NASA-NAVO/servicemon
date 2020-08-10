@@ -1,4 +1,5 @@
 import pytest
+from servicemon.query_runner import QueryRunner
 
 from servicemon.query_runner import (
     _parse_query, _parse_replay,
@@ -190,3 +191,36 @@ def test_global_replay_arg_errors(capsys):
                           '--cone_file', 'some_cone_file.py'])
     assert ('unrecognized arguments: --cone_file'
             in errstr(capsys))
+
+
+def test_service_validation(capsys):
+    args = _parse_query([
+        'fake_services_file',
+        '--cone_file', 'my_cones.py'
+    ])
+    args.services = []
+    args.cone_file = []
+    qr = QueryRunner(args)
+    with pytest.warns(UserWarning, match='Service list is empty') as record:
+        qr._validate_services(args.services)
+    assert len(record) == 1
+
+    args.services = [
+        {'service_type': 'tap'},
+        {'service_type': 'tap'},
+        {'service_type': 'tap'},
+    ]
+    with pytest.warns(None) as record:
+        qr._validate_services(args.services)
+    assert len(record) == 0
+
+    args.services = [
+        {'service_type': 'tap'},
+        {'service_type': 'cone'},
+        {'service_type': 'tap'},
+    ]
+    with pytest.warns(UserWarning,
+                      match='Differing service_type values found in service list.'
+                      '  Some result writers may fail.') as record:
+        qr._validate_services(args.services)
+    assert len(record) == 1

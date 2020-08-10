@@ -1,9 +1,8 @@
 import os
-import sys
 import pathlib
 import warnings
 import traceback
-
+import logging
 import html
 import requests
 
@@ -145,7 +144,7 @@ class Query():
         if trace:
             traceback.print_exc()
         else:
-            print(msg, file=sys.stderr, flush=True)
+            logging.error(msg)
 
     def gather_response_metadata(self, response):
         """
@@ -261,13 +260,10 @@ class Query():
 
         return name
 
-    def getval_old(self, obj, key, default=None):
-        val = getattr(obj, key, None)
-        if val is None:
-            val = obj.get(key, default)
-        return val
-
     def getval(self, obj, key, default=None):
+        """
+        Gets the value as either an attribute val or key val.
+        """
         val = getattr(obj, key, None)
         if val is None:
             try:

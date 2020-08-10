@@ -40,36 +40,36 @@ def test_load_plugins(capsys):
 
     # Check built-ins
     pi = AbstractResultWriter.get_plugin_from_spec('csv_writer:outfile=somedir/somefile.csv')
-    assert 'Writes results to a csv file.' in pi['description']
-    assert pi['cls'].__name__ == 'CsvResultWriter'
-    assert pi['kwargs']['outfile'] == 'somedir/somefile.csv'
+    assert 'Writes results to a csv file.' in pi.description
+    assert pi.cls.__name__ == 'CsvResultWriter'
+    assert pi.kwargs['outfile'] == 'somedir/somefile.csv'
 
     # Check user default dir
     AbstractResultWriter.list_plugins()
 
     pi = AbstractResultWriter.get_plugin_from_spec('defwriter2')
-    assert 'Another writer in the default plug-in dir' in pi['description']
-    assert pi['cls'].__name__ == 'DefWriter2'
-    assert pi['kwargs'] == {}
-    _ = pi['cls']()   # Instantiates fine since it implements the abstract methods.
+    assert 'Another writer in the default plug-in dir' in pi.description
+    assert pi.cls.__name__ == 'DefWriter2'
+    assert pi.kwargs == {}
+    _ = pi.cls()   # Instantiates fine since it implements the abstract methods.
 
     pi = AbstractTimedQuery.get_plugin_from_spec('defquery1:arg1=abc,arg2=def')
-    assert 'A query plug-in ' in pi['description']
-    assert pi['cls'].__name__ == 'DefQuery1'
-    assert pi['kwargs']['arg1'] == 'abc'
-    assert pi['kwargs']['arg2'] == 'def'
+    assert 'A query plug-in ' in pi.description
+    assert pi.cls.__name__ == 'DefQuery1'
+    assert pi.kwargs['arg1'] == 'abc'
+    assert pi.kwargs['arg2'] == 'def'
 
     # Check user plugin dir
     pi = AbstractTimedQuery.get_plugin_from_spec('userquery2')
-    assert pi['cls'].__name__ == 'UserQuery2'
+    assert pi.cls.__name__ == 'UserQuery2'
 
     pi = AbstractResultWriter.get_plugin_from_spec('cannot_make_reader_instance')
-    assert pi['cls'].__name__ == 'CannotInstantiate'
+    assert pi.cls.__name__ == 'CannotInstantiate'
     with pytest.raises(TypeError) as record:
-        _ = pi['cls']()
+        _ = pi.cls()
         assert ("Can't instantiate abstract class CannotInstantiate with abstract methods end"
                 in str(record[0].message))
 
     # Check user file
     pi = AbstractResultWriter.get_plugin_from_spec('sample-writer')
-    assert pi['cls'].__name__ == 'SampleResultWriter'
+    assert pi.cls.__name__ == 'SampleResultWriter'

@@ -90,15 +90,8 @@ in a separate file.)
 use `service_type` of `cone`.  This causes the ``ra``, ``dec`` and ``radius`` values from the input file
 to be appended to the ``access_url`` at query time according to the SCS standard.
 
-.. code-block:: python
+.. literalinclude:: files/cool_archive_cone_service.py
   :caption: cool_archive_cone_service.py
-
-  [
-    {'base_name': 'cool_archive_cone',
-     'service_type': 'cone',
-     'access_url': 'http://vo.cool_archive_cone.org//vo/conesearch',
-     }
-  ]
 
 3. Run `sm_query`_.  By default, all `The Output`_ will appear in the ``results`` directory.
 
@@ -117,22 +110,8 @@ service hosted by the Great Archive 3 times with the same cones defined in the p
 ``service_type`` is ``tap``.  The ``adql`` value is a template containing 3 `{}`s into
 which the input ``ra``, ``dec`` and  ``radius`` values will be substituted.
 
-.. code-block:: python
+.. literalinclude:: files/great_archive_tap_service.py
   :caption: great_archive_tap_service.py
-
-  [
-    {'base_name': 'great_archive_tap',
-    'service_type': 'tap',
-    'access_url': 'http://services.great_archive.net/tap_service',
-    'adql':'''
-    SELECT *
-    FROM ivoa.obscore
-    WHERE
-      1=CONTAINS(POINT('ICRS', s_ra, s_dec),
-                CIRCLE('ICRS', {}, {}, {} ))
-    '''
-    }
-  ]
 
 2. Run `sm_query`_.  By default, all `The Output`_ will appear in the ``results`` directory.
 
@@ -224,46 +203,30 @@ services are assumed to return results as VOTables.
 
   * ``cone`` The query will be constructed as a VO standard Simple Cone Search
     with the RA, DEC and SR parameters being automatically set based per cone.
+
+  .. literalinclude:: files/cool_archive_cone_service.py
+
   * ``xcone`` A non-standard cone search.  The **access_url** is assumed to contain
     three {}s (open/close braces).  The RA, Dec and Radius for each cone will be
     substituted for those 3 braces in order.
 
+  .. literalinclude:: files/sia_service.py
+    :caption: service_type 'xcone' can be used for an SIA service
+  
+  * ``tap`` A Table Access Protocol (TAP) service.  The **adql** value is a template
+    template for the TAP query to be performed.
+
+  .. literalinclude:: files/great_archive_tap_service.py
+    :caption: Sample TAP service.
+  
 * **access_url** - The access URL for the service.
 * **adql** - For the ``tap`` *service_type*, this is the ADQL query. For other types,
   this key must exist, but the value will be ignored. The ADQL query is assumed
   to contain three {}s (open/close braces).  The ra, dec and radius for each cone
   will be substituted for those 3 braces in order.
 
-.. code-block:: python
-  :caption: Example service file:
-
-    [
-        {'base_name': '2MASS_STScI',
-         'service_type': 'cone',
-         'adql': '',
-         'access_url': 'http://gsss.stsci.edu/webservices/vo/ConeSearch.aspx?CAT=2MASS',
-         },
-
-        {'base_name': 'PanSTARRS',
-         'service_type': 'xcone',
-         'adql': '',
-         'access_url': 'https://catalogs.mast.stsci.edu/api/v0.1/panstarrs/dr2/'
-         'mean.votable?flatten_response=false&raw=false&sort_by=distance'
-         '&ra={}&dec={}&radius={}'
-         },
-
-        {'base_name': 'PanSTARRS',
-         'service_type': 'tap',
-         'access_url': 'http://vao.stsci.edu/PS1DR2/tapservice.aspx',
-         'adql':'''
-       SELECT objID, RAMean, DecMean, nDetections, ng, nr, ni, nz, ny, gMeanPSFMag,
-       rMeanPSFMag, iMeanPSFMag, zMeanPSFMag, yMeanPSFMag
-       FROM dbo.MeanObjectView
-       WHERE
-       CONTAINS(POINT('ICRS', RAMean, DecMean),CIRCLE('ICRS',{},{},{}))=1
-         '''
-         }
-    ]
+.. literalinclude:: files/multiple_services.py
+  :caption: **Multiple services** are allowed, but it is recommended that all service_type values are the same.
 
 **********
 The Output
