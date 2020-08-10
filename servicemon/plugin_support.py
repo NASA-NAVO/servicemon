@@ -12,12 +12,13 @@ class SmPluginSupport(ABC):
     _subclasses = {}
     _default_user_plugin_dir = 'plugins'
 
+    @classmethod
     def __init_subclass__(cls, plugin_name=None, description='', **kwargs):
         super().__init_subclass__(**kwargs)
         if plugin_name is None:
             plugin_name = cls.__name__
-        cls._subclasses[plugin_name] = {'cls': cls,
-                                        'description': description}
+        cls._subclasses[plugin_name] = SmPluginDesc(plugin_name, cls, description)
+        # {'cls': cls, 'description': description}
 
     @classmethod
     def load_builtin_plugins(cls):
@@ -61,7 +62,7 @@ class SmPluginSupport(ABC):
         plugin = cls.get_plugin(parsed['plugin_name'])
         if plugin is None:
             raise ValueError(f'No plugin found for spec: {spec}')
-        full_plugin = {**parsed, **plugin}  # combine the dicts
+        full_plugin = SmPluginDesc(plugin.name, plugin.cls, plugin.description, **parsed['kwargs'])
         return full_plugin
 
     @classmethod
@@ -115,6 +116,14 @@ class SmPluginSupport(ABC):
         return is_python_file
 
 
+class SmPluginDesc():
+    def __init__(self, name, cls, description, **kwargs):
+        self.name = name
+        self.cls = cls
+        self.description = description
+        self.kwargs = kwargs
+
+
 class AbstractResultWriter(SmPluginSupport):
 
     _subclasses = {}
@@ -122,13 +131,26 @@ class AbstractResultWriter(SmPluginSupport):
     @abstractmethod
     def begin(self, args, **kwargs):
         """
-        args is the result of an argparse.ArgumentParser's parse_args().
-        kwargs come from the plug-in specification.
+        **args** : argparse.Namespace
+            the result of an argparse.ArgumentParser's parse_args().
+
+        **kwargs** : dict
+            keyword args from the plug-in specification.
         """
         pass
 
     @abstractmethod
     def one_result(self, stats):
+        """
+        **stats** : obj
+            an object with the following methods:
+
+            **columns()** : list of str
+                list of output column names
+
+            **row_values()** : dict
+                dict of output values, one key per column name
+        """
         pass
 
     @abstractmethod

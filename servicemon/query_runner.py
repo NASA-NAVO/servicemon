@@ -68,6 +68,7 @@ class QueryRunner():
         self._verbose = args.verbose
         self._writer_specs = args.writers
 
+        self._writers_descs = []
         self._writers = []
         self._load_plugins(args)
 
@@ -95,7 +96,7 @@ class QueryRunner():
             spec_with_time = now.strftime(spec)
 
             plugin = AbstractResultWriter.get_plugin_from_spec(spec_with_time)
-            self._writers.append(plugin)
+            self._writers_descs.append(plugin)
 
     def run(self):
         """
@@ -103,9 +104,10 @@ class QueryRunner():
 
         self._validate_services(self._services)
 
-        for w in self._writers:
-            w['instance'] = w['cls']()
-            w['instance'].begin(self._args, **w['kwargs'])
+        for wdesc in self._writers_descs:
+            w = wdesc.cls()
+            w.begin(self._args, **wdesc.kwargs)
+            self._writers.append(w)
 
         if self._cones is not None:
             self._run_with_cones()
@@ -113,7 +115,7 @@ class QueryRunner():
             self._run_services_only()
 
         for w in self._writers:
-            w['instance'].end()
+            w.end()
 
     def _validate_services(self, services):
         if len(services) == 0:
@@ -186,7 +188,7 @@ class QueryRunner():
 
     def _output_stats_row(self, stats):
         for w in self._writers:
-            w['instance'].one_result(stats)
+            w.one_result(stats)
 
     def _output_stats_row_to_file(self, stats, stat_file):
         writer = csv.DictWriter(stat_file, dialect='excel',
