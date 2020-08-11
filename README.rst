@@ -14,7 +14,9 @@ for details on installation, customization and use.
 Contributing
 ------------
 
-We encourage and welcome contributions and collaboration in many forms.
+We encourage and welcome contributions in many forms.  Please help us make this 
+a positive and inclusive environment by abiding with the
+`Astropy Community Code of Conduct <http://www.astropy.org/about.html#codeofconduct>`_.
 
 Bug reports and feature requests can be submitted by 
 `creating a new Github issue <https://github.com/NASA-NAVO/servicemon/issues>`_.
