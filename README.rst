@@ -1,12 +1,33 @@
-Measure/monitor VO service performance
---------------------------------------
+==========
+Servicemon
+==========
 
-.. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
-    :target: http://www.astropy.org
-    :alt: Powered by Astropy Badge
+|Powered by Astropy| |PyPI Status| |Travis Status| |Coverage Status|
 
-Measure/monitor performance of a list of VO services over multiple points.
+Servicemon is a tool for collecting performance information for web queries by 
+repeatedly timing the queries over varying input parameters.  The features are 
+available via command line and Python API.
 
+See the `online documentation <https://servicemon.readthedocs.io/en/latest/>`_ 
+for details on installation, customization and use.
+
+Contributing
+------------
+
+We encourage and welcome contributions and collaboration in many forms.
+
+Bug reports and feature requests can be submitted by 
+`creating a new Github issue <https://github.com/NASA-NAVO/servicemon/issues>`_.
+
+Code and documentation changes can be submitted by 
+`creating a pull request <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests>`_
+from GitHub users' "forks" (i.e., copies) of the `servicemon repository <https://github.com/NASA-NAVO/servicemon>`_. 
+This project follows the basic approach of Astropy's 
+`development workflow <https://docs.astropy.org/en/latest/development/workflow/development_workflow.html>`_ and 
+`coding guidelines <https://docs.astropy.org/en/latest/development/codeguide.html>`_.  Since servicemon was initially built using
+the Astropy `cookiecutter template <https://docs.astropy.org/projects/package-template/en/latest/>`_, 
+it shares the same basic development and build tools.  If you have any
+questions, please file an issue (or draft pull request) to start the conversation and we'll be happy to help.
 
 License
 -------
@@ -17,35 +38,17 @@ the `Astropy package template <https://github.com/astropy/package-template>`_
 which is licensed under the BSD 3-clause licence. See the licenses folder for
 more information.
 
+.. |Powered by Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
+    :target: http://www.astropy.org
+    :alt: Powered by Astropy Badge
+.. |Travis Status| image:: https://img.shields.io/travis/NASA-NAVO/servicemon/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
+    :target: https://travis-ci.org/NASA-NAVO/servicemon
+    :alt: Servicemon's Travis CI Status
 
-Contributing
-------------
+.. |Coverage Status| image:: https://codecov.io/gh/NASA-NAVO/servicemon/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/NASA-NAVO/servicemon
+    :alt: Servicemon's Coverage Status
 
-We love contributions! servicemon is open source,
-built on open source, and we'd love to have you hang out in our community.
-
-**Imposter syndrome disclaimer**: We want your help. No, really.
-
-There may be a little voice inside your head that is telling you that you're not
-ready to be an open source contributor; that your skills aren't nearly good
-enough to contribute. What could you possibly offer a project like this one?
-
-We assure you - the little voice in your head is wrong. If you can write code at
-all, you can contribute code to open source. Contributing to open source
-projects is a fantastic way to advance one's coding skills. Writing perfect code
-isn't the measure of a good developer (that would disqualify all of us!); it's
-trying to create something, making mistakes, and learning from those
-mistakes. That's how we all improve, and we are happy to help others learn.
-
-Being an open source contributor doesn't just mean writing code, either. You can
-help out by writing documentation, tests, or even giving feedback about the
-project (and yes - that includes giving feedback about the contribution
-process). Some of these contributions may be the most valuable to the project as
-a whole, because you're coming to the project with fresh eyes, so you can see
-the errors and assumptions that seasoned contributors have glossed over.
-
-Note: This disclaimer was originally written by
-`Adrienne Lowe <https://github.com/adriennefriend>`_ for a
-`PyCon talk <https://www.youtube.com/watch?v=6Uj746j9Heo>`_, and was adapted by
-servicemon based on its use in the README file for the
-`MetPy project <https://github.com/Unidata/MetPy>`_.
+.. |PyPI Status| image:: https://img.shields.io/pypi/v/servicemon.svg
+    :target: https://pypi.python.org/pypi/servicemon
+    :alt: Servicemon's PyPI Status
