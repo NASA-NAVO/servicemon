@@ -16,7 +16,7 @@ Contributing
 
 We encourage and welcome contributions in many forms.  Please help us make this 
 a positive and inclusive environment by abiding with the
-`Astropy Community Code of Conduct <http://www.astropy.org/about.html#codeofconduct>`_.
+`Astropy Community Code of Conduct <https://www.astropy.org/code_of_conduct.html>`_.
 
 Bug reports and feature requests can be submitted by 
 `creating a new Github issue <https://github.com/NASA-NAVO/servicemon/issues>`_.
@@ -27,8 +27,8 @@ from GitHub users' "forks" (i.e., copies) of the `servicemon repository <https:/
 This project follows the basic approach of Astropy's 
 `development workflow <https://docs.astropy.org/en/latest/development/workflow/development_workflow.html>`_ and 
 `coding guidelines <https://docs.astropy.org/en/latest/development/codeguide.html>`_.  Since servicemon was initially built using
-the Astropy `cookiecutter template <https://docs.astropy.org/projects/package-template/en/latest/>`_, 
-it shares the same basic development and build tools.  If you have any
+the `Astropy Package Template <https://docs.astropy.org/projects/package-template/en/latest/>`_, 
+it shares Astropy's basic development and build tools.  If you have any
 questions, please file an issue (or draft pull request) to start the conversation and we'll be happy to help.
 
 License
@@ -43,6 +43,7 @@ more information.
 .. |Powered by Astropy| image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
+    
 .. |Travis Status| image:: https://img.shields.io/travis/NASA-NAVO/servicemon/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
     :target: https://travis-ci.org/NASA-NAVO/servicemon
     :alt: Servicemon's Travis CI Status
