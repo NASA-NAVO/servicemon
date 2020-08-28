@@ -108,7 +108,7 @@ class SmPluginSupport(ABC):
     def __load_file(cls, path: Path):
         python_code = path.read_text(encoding='utf-8')
         compiled_code = compile(python_code, path.name, 'exec')
-        exec(compiled_code, globals(), locals())
+        exec(compiled_code, globals())
 
     @classmethod
     def __is_python_file(cls, path: Path):

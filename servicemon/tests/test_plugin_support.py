@@ -4,6 +4,7 @@ from pathlib import Path
 from astropy.utils.data import get_pkg_data_filename
 
 from servicemon.plugin_support import SmPluginSupport, AbstractResultWriter, AbstractTimedQuery
+from servicemon.query_runner import _parse_query
 
 
 def load_builtins(capsys):
@@ -11,7 +12,7 @@ def load_builtins(capsys):
 
 
 def load_from_default_user_dir(capsys):
-    data_file = get_pkg_data_filename('data/default_user_plugin_dir/defwriter1.py')
+    data_file = get_pkg_data_filename('data/default_user_plugin_dir/basic_writer.py')
     data_dir = Path(data_file).parent
     SmPluginSupport._default_user_plugin_dir = data_dir
 
@@ -47,9 +48,9 @@ def test_load_plugins(capsys):
     # Check user default dir
     AbstractResultWriter.list_plugins()
 
-    pi = AbstractResultWriter.get_plugin_from_spec('defwriter2')
+    pi = AbstractResultWriter.get_plugin_from_spec('basic_writer')
     assert 'Another writer in the default plug-in dir' in pi.description
-    assert pi.cls.__name__ == 'DefWriter2'
+    assert pi.cls.__name__ == 'BasicWriter'
     assert pi.kwargs == {}
     _ = pi.cls()   # Instantiates fine since it implements the abstract methods.
 
@@ -73,3 +74,20 @@ def test_load_plugins(capsys):
     # Check user file
     pi = AbstractResultWriter.get_plugin_from_spec('sample-writer')
     assert pi.cls.__name__ == 'SampleResultWriter'
+
+
+def test_imports(capsys):
+    load_from_default_user_dir(capsys)
+    pi = AbstractResultWriter.get_plugin_from_spec('import_tester')
+    pi_instance = pi.cls()
+
+    # Make sure we can run begin() which tries to print out the imported 'requests' module.
+    args = _parse_query([
+        'fake_services_file.py',
+        '--cone_file', 'my_cones.py'
+    ])
+    pi_instance.begin(args)
+
+    captured = capsys.readouterr()
+    output = str(captured.out)
+    assert "module 'requests'" in output
