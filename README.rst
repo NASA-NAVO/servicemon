@@ -27,7 +27,7 @@ from GitHub users' "forks" (i.e., copies) of the `servicemon repository <https:/
 This project follows the basic approach of Astropy's 
 `development workflow <https://docs.astropy.org/en/latest/development/workflow/development_workflow.html>`_ and 
 `coding guidelines <https://docs.astropy.org/en/latest/development/codeguide.html>`_.  Since servicemon was initially built using
-the `Astropy Package Template <https://docs.astropy.org/projects/package-template/en/latest/>`_, 
+the Astropy Package Template, 
 it shares Astropy's basic development and build tools.  If you have any
 questions, please file an issue (or draft pull request) to start the conversation and we'll be happy to help.
 
