@@ -347,7 +347,9 @@ def _create_query_argparser():
 
     # Add general args.
     parser.add_argument('-r', '--result_dir', dest='result_dir', default='results',
-                        help='The directory in which to put query result files.',
+                        help='The directory in which to put query result files.'
+                        ' Unless --save_results is specified, each query result file'
+                        ' will be deleted after statistics are gathered for the query.',
                         metavar='result_dir')
     parser.add_argument('-l', '--load_plugins', dest='load_plugins', metavar='plugin_dir_or_file',
                         help='Directory or file from which to load user plug-ins. '

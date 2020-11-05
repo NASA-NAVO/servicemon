@@ -8,6 +8,7 @@ cat << EOF >&2
 usage: sm_run_all input_dir
                   [-h]
                   [-r result_dir]
+                  [-o script_output_dir]
                   [-l plugin_dir_or_file]
                   [-w writer] [-s]
                   [-t {async,sync}] [-n] [-v]
@@ -35,6 +36,11 @@ optional arguments:
   -h, --help            show this help message and exit
   -r result_dir, --result_dir result_dir
                         The directory in which to put query result files.
+                        Unless --save_results is specified, each query result file
+                        will be deleted after statistics are gathered for the query.
+  -o script_output_dir, --script_output_dir script_output_dir
+                        The directory in which script stdout and stderr files are written.
+                        If not specified, stdout and stderr will not be redirected.
   -l plugin_dir_or_file, --load_plugins plugin_dir_or_file
                         Directory or file from which to load user plug-ins.
   -w writer, --writer writer
@@ -83,8 +89,13 @@ for resource_file in "${IN_DIR}/${SUB_DIR}"/*.py; do
    resource_name=${base_filename%.py}
 
    set -x  # print out commands
-   sm_query ${resource_file} $@ \
-      >> "${RESULT_DIR}"/"$resource_name"-`date "+%Y-%m-%d-%H-%M"`_runlog.txt 2>&1
+
+   if [ -z ${SCRIPT_OUTPUT_DIR} ]; then
+      sm_query ${resource_file} $@
+   else
+      sm_query ${resource_file} $@ \
+         >> "${SCRIPT_OUTPUT_DIR}"/"$resource_name"-`date "+%Y-%m-%d-%H-%M"`_runlog.txt 2>&1
+   fi
    set +x
 
 done
@@ -125,20 +136,19 @@ if [ -z ${IN_DIR} ]; then
    exit 1
 fi
 
-# Find result directory
+# Find script output directory
 for (( i=2; i < "$#"; i++ )); do
-    if [[ ${!i} == "--result_dir" || ${!i} == "-r" ]]; then
+    if [[ ${!i} == "--script_output_dir" || ${!i} == "-o" ]]; then
       next=$((i+1))
-      RESULT_DIR=${!next}
+      SCRIPT_OUTPUT_DIR=${!next}
+      mkdir -p "${SCRIPT_OUTPUT_DIR}"
+
+      # Remove these args since they won't be passed on to other commands.
+      set -- "${@:1:i-1}" "${@:i+2}"
+
       break
     fi
 done
-if [ -z ${RESULT_DIR} ]; then
-   echo error:  --result_dir is required
-   usage
-   exit 1
-fi
-mkdir -p "${RESULT_DIR}"
 
 # Eat the IN_DIR argument.
 shift
@@ -151,7 +161,12 @@ shopt -s nullglob  # With no matches, don't enter loop
 for in_sub_dir in ${IN_DIR}/*; do
     if [ -d "${in_sub_dir}" ]; then
       SUB_DIR=`basename ${in_sub_dir}`
-      run_all_in_dir  $@ \
-         >> "${RESULT_DIR}"/"${SUB_DIR}"-`date "+%Y-%m-%d-%H-%M"`_comlog.txt 2>&1 &
+
+      if [ -z ${SCRIPT_OUTPUT_DIR} ]; then
+         run_all_in_dir  $@ &
+      else
+         run_all_in_dir  $@ \
+            >> "${SCRIPT_OUTPUT_DIR}"/"${SUB_DIR}"-`date "+%Y-%m-%d-%H-%M"`_comlog.txt 2>&1 &
+      fi
     fi
 done
