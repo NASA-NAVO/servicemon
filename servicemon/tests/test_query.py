@@ -9,6 +9,6 @@ def test_user_agent(capsys):
 
     default_ua = compute_user_agent(None)
     expected = (
-        r'servicemon\/[0-9]\.[0-9][^ ]* \(IVOA\-monitor https\:\/\/github.com\/NASA-NAVO\/servicemon\) Python/3.7.3')
+        r'servicemon\/[0-9]\.[0-9][^ ]* \(IVOA\-monitor https\:\/\/github.com\/NASA-NAVO\/servicemon\) Python/3\.')
     match = re.search(expected, default_ua)
     assert match
