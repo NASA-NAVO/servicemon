@@ -35,16 +35,19 @@ def test_global_query_args(capsys):
                           'services': 'my_services_file',
                           'start_index': conelist_defaults['start_index'],
                           'tap_mode': 'async',
+                          'user_agent': None,
                           'verbose': False,
                           'writers': ['csv_writer']}
 
     # Without defaults for auto-generated cones.
+    custom_agent = 'MyCustomAgent/6.7'
     args = _parse_query([
         'my_services_file',
         '--load_plugins', 'my_plugin_dir',
         '--writer', 'my_writer1', '--writer', 'my_writer2:karg1=val1,kwarg2=val2',
         '--result_dir', 'my_output_dir',
         '--save_results', '--tap_mode', 'sync', '--norun', '--verbose',
+        '--user_agent', custom_agent,
         '--num_cones', '22', '--min_radius', '0.123', '--max_radius', '0.456',
         '--start_index', '17', '--cone_limit', '3'
     ])
@@ -60,6 +63,7 @@ def test_global_query_args(capsys):
                           'services': 'my_services_file',
                           'start_index': 17,
                           'tap_mode': 'sync',
+                          'user_agent': custom_agent,
                           'verbose': True,
                           'writers': ['my_writer1', 'my_writer2:karg1=val1,kwarg2=val2']}
 
@@ -85,6 +89,7 @@ def test_global_query_args(capsys):
                           'services': 'my_services_file',
                           'start_index': 13,
                           'tap_mode': 'sync',
+                          'user_agent': None,
                           'verbose': True,
                           'writers': ['my_writer1', 'my_writer2:karg1=val1,kwarg2=val2']}
 
@@ -109,6 +114,7 @@ def test_global_query_args(capsys):
                           'services': 'my_services_file',
                           'start_index': 13,
                           'tap_mode': 'sync',
+                          'user_agent': None,
                           'verbose': True,
                           'writers': ['my_writer1', 'my_writer2:karg1=val1,kwarg2=val2']}
 
@@ -159,16 +165,19 @@ def test_global_replay_args(capsys):
                           'save_results': False,
                           'start_index': 0,
                           'tap_mode': 'async',
+                          'user_agent': None,
                           'verbose': False,
                           'writers': ['csv_writer']}
 
     # Without defaults.
+    custom_agent = 'AnotherCustomAgent/12.9 (with a comment)'
     args = _parse_replay([
         'file_to_replay.csv',
         '--load_plugins', 'my_plugin_dir',
         '--writer', 'my_writer1', '--writer', 'my_writer2:karg1=val1,kwarg2=val2',
         '--result_dir', 'my_output_dir',
         '--save_results', '--tap_mode', 'sync', '--norun', '--verbose',
+        '--user_agent', custom_agent,
         '--start_index', '17', '--cone_limit', '3'
     ])
     assert vars(args) == {'cone_limit': 3,
@@ -179,6 +188,7 @@ def test_global_replay_args(capsys):
                           'save_results': True,
                           'start_index': 17,
                           'tap_mode': 'sync',
+                          'user_agent': custom_agent,
                           'verbose': True,
                           'writers': ['my_writer1', 'my_writer2:karg1=val1,kwarg2=val2']}
 

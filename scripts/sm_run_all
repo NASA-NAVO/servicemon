@@ -12,6 +12,7 @@ usage: sm_run_all input_dir
                   [-l plugin_dir_or_file]
                   [-w writer] [-s]
                   [-t {async,sync}] [-n] [-v]
+                  [-u USER_AGENT]
                   [--num_cones num_cones | --cone_file cone_file]
                   [--min_radius MIN_RADIUS] [--max_radius MAX_RADIUS]
                   [--start_index start_index] [--cone_limit cone_limit]
@@ -55,6 +56,9 @@ optional arguments:
                         metadata is gathered for the query.
   -t {async,sync}, --tap_mode {async,sync}
                         How to run TAP queries (default=async)
+  -u USER_AGENT, --user_agent USER_AGENT
+                        Override the User-Agent used for queries
+                        (default=None)
   -n, --norun           Display summary of command arguments without
                         performing any actions
   -v, --verbose         Print additional information to stdout
@@ -88,15 +92,16 @@ for resource_file in "${IN_DIR}/${SUB_DIR}"/*.py; do
    base_filename=`basename ${resource_file}`
    resource_name=${base_filename%.py}
 
-   set -x  # print out commands
+
 
    if [ -z ${SCRIPT_OUTPUT_DIR} ]; then
       sm_query ${resource_file} $@
    else
+      set -x  # print out commands
       sm_query ${resource_file} $@ \
          >> "${SCRIPT_OUTPUT_DIR}"/"$resource_name"-`date "+%Y-%m-%d-%H-%M"`_runlog.txt 2>&1
+      set +x
    fi
-   set +x
 
 done
 

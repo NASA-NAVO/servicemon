@@ -64,6 +64,7 @@ class QueryRunner():
         self._starting_cone = int(args.start_index)
         self._cone_limit = int(args.cone_limit)
         self._tap_mode = args.tap_mode
+        self._user_agent = args.user_agent
         self._save_results = args.save_results
         self._verbose = args.verbose
         self._writer_specs = args.writers
@@ -144,6 +145,7 @@ class QueryRunner():
                         query = Query(service, (cone['ra'], cone['dec']),
                                       cone['radius'], self._result_dir,
                                       tap_mode=self._tap_mode,
+                                      agent=self._user_agent,
                                       save_results=self._save_results,
                                       verbose=self._verbose)
                         query.run()
@@ -169,6 +171,7 @@ class QueryRunner():
                 try:
                     query = Query(service, None, None, self._result_dir,
                                   tap_mode=self._tap_mode,
+                                  agent=self._user_agent,
                                   save_results=self._save_results,
                                   verbose=self._verbose)
                     query.run()
@@ -370,6 +373,9 @@ def _create_query_argparser():
     parser.add_argument('-t', '--tap_mode', dest='tap_mode',
                         choices={'sync', 'async'}, default='async',
                         help='How to run TAP queries (default=async)')
+    parser.add_argument('-u', '--user_agent', dest='user_agent',
+                        default=None,
+                        help='Override the User-Agent used for queries (default=None)')
     parser.add_argument('-n', '--norun', dest='norun', action='store_true',
                         help='Display summary of command arguments without '
                         'performing any actions')
@@ -435,6 +441,9 @@ def _create_replay_argparser():
     parser.add_argument('-t', '--tap_mode', dest='tap_mode',
                         choices={'sync', 'async'}, default='async',
                         help='How to run TAP queries (default=async)')
+    parser.add_argument('-u', '--user_agent', dest='user_agent',
+                        default=None,
+                        help='Override the User-Agent used for queries (default=None)')
     parser.add_argument('-n', '--norun', dest='norun', action='store_true',
                         help='Display summary of command arguments without '
                         'performing any actions')
