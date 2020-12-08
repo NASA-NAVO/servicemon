@@ -5,9 +5,10 @@ import traceback
 import logging
 import html
 import requests
+import sys
 
 from codetiming import Timer
-
+import servicemon
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astroquery.utils import parse_coordinates
@@ -29,19 +30,30 @@ def time_this(interval_name):
     return time_this_decorator
 
 
+def compute_user_agent(specified_agent):
+    user_agent = specified_agent
+    if user_agent is None:
+        vi = sys.version_info
+        product = f'servicemon/{servicemon.__version__}'
+        comment = '(IVOA-monitor https://github.com/NASA-NAVO/servicemon)'
+        python_version = f'Python/{vi.major}.{vi.minor}.{vi.major}'
+        user_agent = f'{product} {comment} {python_version}'
+    return user_agent
+
+
 class Query():
     """
     """
 
     def __init__(self, service, coords, radius, out_dir, use_subdir=True,
-                 agent='NAVO-servicemon', tap_mode='async', save_results=True,
+                 agent=None, tap_mode='async', save_results=True,
                  verbose=False):
         self._save_results = save_results
 
         self._timer = Timer('query_total', logger=None)
         self._timer.timers.clear()
 
-        self.__agent = agent
+        self.__agent = compute_user_agent(agent)
         self._tap_mode = tap_mode
         self._service = service
         self._base_name = self._compute_base_name()
