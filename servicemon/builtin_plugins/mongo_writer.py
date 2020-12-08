@@ -22,8 +22,6 @@ class MongoDBResultWriter(AbstractResultWriter, plugin_name='mongo_writer',
 
     def one_result(self, stats):
 
-        jsonStr = '{\n'
-
         fields = stats.columns()
         self.ncols = len(fields)
 
@@ -31,13 +29,9 @@ class MongoDBResultWriter(AbstractResultWriter, plugin_name='mongo_writer',
 
         jsonStr = json.dumps(row)
 
-        print(jsonStr)
-
         postData = {'json':jsonStr}
 
         r = requests.post(url=self._outURL, files=postData)
 
         with open(self._logFile, 'a+') as file:
             file.write(r.text)
-            file.close()
-
