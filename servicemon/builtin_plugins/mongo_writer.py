@@ -9,7 +9,6 @@ from servicemon.plugin_support import AbstractResultWriter
 class MongoDBResultWriter(AbstractResultWriter, plugin_name='mongo_writer',
                           description='Sends results to a remote MongoDB database.'):
 
-
     def begin(self, args, outfile=None):
 
         self._outURL = 'http://vmnavo01.ipac.caltech.edu/cgi-bin/NAVOMonitor/nph-submit'
@@ -18,7 +17,6 @@ class MongoDBResultWriter(AbstractResultWriter, plugin_name='mongo_writer',
 
     def end(self):
         pass
-
 
     def one_result(self, stats):
 
@@ -29,7 +27,7 @@ class MongoDBResultWriter(AbstractResultWriter, plugin_name='mongo_writer',
 
         jsonStr = json.dumps(row)
 
-        postData = {'json':jsonStr}
+        postData = {'json': jsonStr}
 
         r = requests.post(url=self._outURL, files=postData)
 
