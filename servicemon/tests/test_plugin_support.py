@@ -36,7 +36,7 @@ def test_load_plugins(capsys):
     load_from_user_dir(capsys)
     load_from_user_file(capsys)
 
-    assert len(AbstractResultWriter._subclasses) == 6  # lengths include the Abstract* base classes.
+    assert len(AbstractResultWriter._subclasses) == 7  # lengths include the Abstract* base classes.
     assert len(AbstractTimedQuery._subclasses) == 4
 
     # Check built-ins
