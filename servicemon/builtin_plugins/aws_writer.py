@@ -10,37 +10,36 @@ from servicemon.plugin_support import AbstractResultWriter
 
 
 class AWSResultWriter(AbstractResultWriter, plugin_name='aws_writer',
-                          description='Sends results to a central SQLite database.'):
-
+                      description='Sends results to a central SQLite database.'):
 
     # BEGIN gathers info and sends a 'begin' state message
     # to the admin database
 
     def begin(self, args, outfile=None):
 
-        self._pid        = os.getpid()
+        self._pid = os.getpid()
 
-        self._starttime  = str(datetime.datetime.now())
+        self._starttime = str(datetime.datetime.now())
 
-        self._adminURL   = 'http://vmnavo01.ipac.caltech.edu/cgi-bin/NAVOMonitor/nph-admin'
+        self._adminURL = 'http://vmnavo01.ipac.caltech.edu/cgi-bin/NAVOMonitor/nph-admin'
         self._resultsURL = 'http://vmnavo01.ipac.caltech.edu/cgi-bin/NAVOMonitor/nph-submit'
 
         try:
-            self._region      = ec2_metadata.region
+            self._region = ec2_metadata.region
             self._instance_id = ec2_metadata.instance_id
-            self._hostname    = ec2_metadata.public_hostname
+            self._hostname = ec2_metadata.public_hostname
 
-        except:
-            self._region      = ''
+        except Exception:
+            self._region = ''
             self._instance_id = ''
-            self._hostname    = socket.getfqdn()
+            self._hostname = socket.getfqdn()
 
         if len(self._region) > 0:
             self._location = self._region
         else:
             self._location = self._hostname
 
-        data = {'hostname': self._hostname, 'pid': self._pid, 
+        data = {'hostname': self._hostname, 'pid': self._pid,
                 'region': self._region, 'instance_id': self._instance_id,
                 'starttime': self._starttime, 'endtime': ''}
 
@@ -54,7 +53,6 @@ class AWSResultWriter(AbstractResultWriter, plugin_name='aws_writer',
 
         print(r.text)
 
-
     # END sends an 'end' state message to the admin database,
     # potentially triggering shutdown/clean-up
 
@@ -62,7 +60,7 @@ class AWSResultWriter(AbstractResultWriter, plugin_name='aws_writer',
 
         endtime = str(datetime.datetime.now())
 
-        data = {'hostname': self._hostname, 'pid': self._pid, 
+        data = {'hostname': self._hostname, 'pid': self._pid,
                 'region': self._region, 'instance_id': self._instance_id,
                 'starttime': self._starttime, 'endtime': endtime}
 
@@ -75,7 +73,6 @@ class AWSResultWriter(AbstractResultWriter, plugin_name='aws_writer',
         r = requests.post(url=self._adminURL, files=post_data)
 
         print(r.text)
-
 
     # ONE_RESULT sends a data record (the results on a single query)
     # to the results database
@@ -93,9 +90,6 @@ class AWSResultWriter(AbstractResultWriter, plugin_name='aws_writer',
         print('DATA> ' + str(row))
 
         jsonStr = json.dumps(row)
-
-        # print("DATA>  ", row['name'], row['access_url'],
-              # row['int0_duration'], row['int1_duration'], row['num_rows'])
 
         post_data = {'json': jsonStr}
 
