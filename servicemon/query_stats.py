@@ -65,9 +65,9 @@ class QueryStats():
 
         if lint == 0:
             now = datetime.fromtimestamp(time.time())  # now = datetime.now()
-            self._vals['start_time'] = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+            self._vals['start_time'] = now.strftime('%Y-%m-%d %H:%M:%S.%f')
         end = datetime.fromtimestamp(interval.end_time)
-        self._vals['end_time'] = end.strftime('%Y-%m-%d-%H:%M:%S.%f')
+        self._vals['end_time'] = end.strftime('%Y-%m-%d %H:%M:%S.%f')
 
         self._vals[f'int{lint}_desc'] = interval.desc
         self._vals[f'int{lint}_duration'] = interval.duration

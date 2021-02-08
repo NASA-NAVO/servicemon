@@ -49,7 +49,7 @@ class CsvResultWriter(AbstractResultWriter, plugin_name='csv_writer',
                 result_path = Path(outfile)
         else:
             now = datetime.now()
-            dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+            dtstr = now.strftime('%Y-%m-%d %H:%M:%S.%f')
 
             base_services_name = Path(args.services).stem
             result_name = f'{base_services_name}_{dtstr}.csv'

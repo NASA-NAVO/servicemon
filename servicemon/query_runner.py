@@ -92,7 +92,7 @@ class QueryRunner():
 
         for spec in self._writer_specs:
             # Substitute time formats in writer templates,
-            # such as '%Y-%m-%d-%H:%M:%S.%f'
+            # such as '%Y-%m-%d %H:%M:%S.%f'
             now = datetime.now()
             spec_with_time = now.strftime(spec)
 
@@ -466,14 +466,14 @@ def _create_replay_argparser():
 
 def receiveSignal(signalNumber, frame):
     now = datetime.now()
-    dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+    dtstr = now.strftime('%Y-%m-%d %H:%M:%S.%f')
     logging.warning(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr,
                     flush=True)
 
 
 def receiveSIGTERM(signalNumber, frame):
     now = datetime.now()
-    dtstr = now.strftime('%Y-%m-%d-%H:%M:%S.%f')
+    dtstr = now.strftime('%Y-%m-%d %H:%M:%S.%f')
     logging.warning(f'Received signal {signalNumber} at {dtstr}', file=sys.stderr,
                     flush=True)
     faulthandler.dump_traceback()
@@ -531,4 +531,4 @@ def _init_logging(args):
 
     logging.basicConfig(format='%(levelname)s: (%(asctime)s)    %(message)s',
                         level=level,
-                        datefmt='%Y-%m-%d-%H:%M:%S')
+                        datefmt='%Y-%m-%d %H:%M:%S')
