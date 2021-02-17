@@ -1,5 +1,6 @@
 import pyvo as vo
 
+
 class StatQueries():
 
     @property
