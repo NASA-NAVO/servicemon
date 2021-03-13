@@ -31,6 +31,19 @@ the Astropy Package Template,
 it shares Astropy's basic development and build tools.  If you have any
 questions, please file an issue (or draft pull request) to start the conversation and we'll be happy to help.
 
+If you locally cloned this repo before March 12, 2021
+"""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+The primary branch for this repo has been transitioned from ``master`` to ``main``.  If you have a local clone of this repository and want to keep your local branch in sync with this repo, you'll need to do the following in your local clone from your terminal::
+
+   git fetch --all --prune
+   # you can stop here if you don't use your local "master"/"main" branch
+   git branch -m master main
+   git branch -u origin/main main
+
+If you are using a GUI to manage your repos you'll have to find the equivalent commands as it's different for different programs. Alternatively, you can just delete your local clone and re-clone!
+
+
 License
 -------
 
@@ -44,11 +57,11 @@ more information.
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
     
-.. |Travis Status| image:: https://img.shields.io/travis/NASA-NAVO/servicemon/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
+.. |Travis Status| image:: https://img.shields.io/travis/NASA-NAVO/servicemon/main?logo=travis%20ci&logoColor=white&label=Travis%20CI
     :target: https://travis-ci.org/NASA-NAVO/servicemon
     :alt: Servicemon's Travis CI Status
 
-.. |Coverage Status| image:: https://codecov.io/gh/NASA-NAVO/servicemon/branch/master/graph/badge.svg
+.. |Coverage Status| image:: https://codecov.io/gh/NASA-NAVO/servicemon/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/NASA-NAVO/servicemon
     :alt: Servicemon's Coverage Status
 
