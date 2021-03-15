@@ -11,7 +11,7 @@ from codetiming import Timer
 import servicemon
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
-from astroquery.utils import parse_coordinates
+from servicemon.utils import parse_coordinates
 
 from .query_stats import Interval, QueryStats
 from .pyvo_wrappers import TAPServiceSM
