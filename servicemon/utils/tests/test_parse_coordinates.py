@@ -1,16 +1,10 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
-from collections import OrderedDict
-import os
-import requests
 import pytest
-import tempfile
-import textwrap
 
 import astropy.coordinates as coord
 import astropy.units as u
 
 from ...utils import parse_coordinates
+
 
 @pytest.mark.parametrize(('coordinates'),
                          [coord.SkyCoord(ra=148, dec=69, unit=(u.deg, u.deg)),
@@ -40,4 +34,3 @@ def test_parse_coordinates_4():
     coordinates = "251.51 32.36"
     c = parse_coordinates(coordinates)
     assert c.to_string() == coordinates
-
