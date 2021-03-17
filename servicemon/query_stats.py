@@ -2,45 +2,16 @@ import time
 from datetime import datetime
 
 
-class Interval():
-    """
-    """
-    def __init__(self, desc, duration=0):
-        self._desc = desc
-        self._start_time = time.time()
-        self._end_time = self._start_time + duration
-
-    def close(self):
-        self._end_time = time.time()
-        return self
-
-    @property
-    def desc(self):
-        return self._desc
-
-    @property
-    def duration(self):
-        return self._end_time - self._start_time
-
-    @property
-    def start_time(self):
-        return self._start_time
-
-    @property
-    def end_time(self):
-        return self._end_time
-
-
 class QueryStats():
     """
     """
     def __init__(self, name, base_name, service_type, access_url, query_params,
-                 result_meta_fields, max_intervals=8):
+                 result_meta_fields, max_extra_durations=8):
 
         # First save the params needed to define the result structure.
         self._query_params = self._organize_params(query_params)
         self._result_meta_fields = result_meta_fields
-        self._max_intervals = max_intervals
+        self._max_extra_durations = max_extra_durations
         self._result_meta = dict.fromkeys(result_meta_fields)
 
         self._vals = dict.fromkeys(self.columns())
@@ -55,29 +26,51 @@ class QueryStats():
         self._vals.update(self._query_params)  # Add the query_params values.
         self._vals.update(self._result_meta)  # Add the result metadata values.
 
-        self._intervals = []
+        self._num_extra_durations = 0
 
-    def add_interval(self, interval):
-        lint = len(self._intervals)
-        if lint > self._max_intervals:
+    def add_named_duration(self, name, duration):
+        if self._num_extra_durations >= self._max_extra_durations:
             raise ValueError(
-                f'Too many intervals added ({self._max_intervals + 1})')
+                f'Too many intervals added ({self._num_extra_durations + 1})')
+        self._vals[f'extra_dur{self._num_extra_durations}_name'] = name
+        self._vals[f'extra_dur{self._num_extra_durations}_value'] = duration
+        self._num_extra_durations += 1
 
-        if lint == 0:
-            now = datetime.fromtimestamp(time.time())  # now = datetime.now()
-            self._vals['start_time'] = now.strftime('%Y-%m-%d %H:%M:%S.%f')
-        end = datetime.fromtimestamp(interval.end_time)
-        self._vals['end_time'] = end.strftime('%Y-%m-%d %H:%M:%S.%f')
+    def mark_start_time(self):
+        now = datetime.fromtimestamp(time.time())
+        self._vals['start_time'] = now.strftime('%Y-%m-%d %H:%M:%S.%f')
 
-        self._vals[f'int{lint}_desc'] = interval.desc
-        self._vals[f'int{lint}_duration'] = interval.duration
+    def mark_end_time(self):
+        now = datetime.fromtimestamp(time.time())
+        self._vals['end_time'] = now.strftime('%Y-%m-%d %H:%M:%S.%f')
 
-        self._intervals.append(interval)
-
-    # property result metadata
     @property
     def result_meta(self):
         return self._result_meta
+
+    @property
+    def do_query_dur(self):
+        return self._vals['do_query_dur']
+
+    @do_query_dur.setter
+    def do_query_dur(self, val):
+        self._vals['do_query_dur'] = val
+
+    @property
+    def stream_to_file_dur(self):
+        return self._vals['stream_to_file_dur']
+
+    @stream_to_file_dur.setter
+    def stream_to_file_dur(self, val):
+        self._vals['stream_to_file_dur'] = val
+
+    @property
+    def query_total_dur(self):
+        return self._vals['query_total_dur']
+
+    @query_total_dur.setter
+    def query_total_dur(self, val):
+        self._vals['query_total_dur'] = val
 
     @property
     def errmsg(self):
@@ -94,10 +87,11 @@ class QueryStats():
             self._vals[key] = value.get(key)
 
     def columns(self):
-        cols = ['name', 'start_time', 'end_time']
-        for i in range(0, self._max_intervals):
-            cols.append(f'int{i}_desc')
-            cols.append(f'int{i}_duration')
+        cols = ['name', 'start_time', 'end_time',
+                'do_query_dur', 'stream_to_file_dur', 'query_total_dur']
+        for i in range(0, self._max_extra_durations):
+            cols.append(f'extra_dur{i}_name')
+            cols.append(f'extra_dur{i}_value')
         cols.append('base_name')
         cols.append('service_type')
         cols.append('RA')

@@ -13,21 +13,11 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from servicemon.utils import parse_coordinates
 
-from .query_stats import Interval, QueryStats
+from .query_stats import QueryStats
 from .pyvo_wrappers import TAPServiceSM
-
-
-def time_this(interval_name):
-    def time_this_decorator(func):
-        def wrapper(*args, **kwargs):
-            interval = Interval(interval_name)
-            result = func(*args, **kwargs)
-            interval.close()
-            args[0].stats.add_interval(interval)
-
-            return result
-        return wrapper
-    return time_this_decorator
+from .timing_labels import (QUERY_TOTAL, DO_QUERY, STREAM_TO_FILE,
+                            TAP_SUBMIT, TAP_RUN, TAP_WAIT, TAP_RAISE_IF_ERROR,
+                            TAP_FETCH_RESPONSE, TAP_DELETE)
 
 
 def compute_user_agent(specified_agent):
@@ -50,7 +40,7 @@ class Query():
                  verbose=False):
         self._save_results = save_results
 
-        self._timer = Timer('query_total', logger=None)
+        self._timer = Timer(QUERY_TOTAL, logger=None)
         self._timer.timers.clear()
 
         self.__agent = compute_user_agent(agent)
@@ -90,44 +80,51 @@ class Query():
         return self._stats
 
     def run(self):
-        with self._timer:
-            if self._service_type == 'cone':
-                response = self.do_cone_query()
-                self.stream_to_file(response)
-            if self._service_type == 'xcone':
-                response = self.do_xcone_query()
-                self.stream_to_file(response)
-            elif self._service_type == 'tap':
-                tap_service = TAPServiceSM(self._access_url)
-                if self._tap_mode == 'async':
-                    response = self.do_tap_query_async_pyvo(tap_service)
-                else:
-                    response = self.do_tap_query_pyvo(tap_service)
-                self.stream_to_file(response)
+        self._stats.mark_start_time()
+        try:
+            with self._timer:
+                if self._service_type == 'cone':
+                    response = self.do_cone_query()
+                    self.stream_to_file(response)
+                if self._service_type == 'xcone':
+                    response = self.do_xcone_query()
+                    self.stream_to_file(response)
+                elif self._service_type == 'tap':
+                    tap_service = TAPServiceSM(self._access_url)
+                    if self._tap_mode == 'async':
+                        response = self.do_tap_query_async_pyvo(tap_service)
+                    else:
+                        response = self.do_tap_query_pyvo(tap_service)
+                    self.stream_to_file(response)
+        except Exception as e:
+            msg = f'Query error for service {self._service}: {repr(e)}'
+            self._handle_exc(msg)
+        finally:
+            self._stats.mark_end_time()
 
         self.gather_response_metadata(response)
 
-    @time_this('do_query')
+    @Timer(name=DO_QUERY, logger=None)
     def do_tap_query_async_pyvo(self, tap_service):
         response = tap_service.run_async_timed(self._adql, streamable_response=True)
         return response
 
-    @time_this('do_query')
+    @Timer(name=DO_QUERY, logger=None)
     def do_tap_query_pyvo(self, tap_service):
         response = tap_service.run_sync_timed(self._adql, streamable_response=True)
         return response
 
-    @time_this('do_query')
+    @Timer(name=DO_QUERY, logger=None)
     def do_cone_query(self):
         response = self.do_request(self._access_url, self._query_params)
         return response
 
-    @time_this('do_query')
+    @Timer(name=DO_QUERY, logger=None)
     def do_xcone_query(self):
         response = self.do_request(self._access_url)
         return response
 
-    @time_this('stream_to_file')
+    @Timer(name=STREAM_TO_FILE, logger=None)
     def stream_to_file(self, response):
         os.makedirs(os.path.dirname(self._filename), exist_ok=True)
         with open(self._filename, 'wb+') as fd:
@@ -160,12 +157,27 @@ class Query():
 
     def gather_response_metadata(self, response):
         """
-        response:  Either an http.client.HTTPResponse or a yyy
+        response:  Either an http.client.HTTPResponse or a ???
         """
         # Add timings to stats intervals.
         timers = self._timer.timers
-        for items in timers.items():
-            self._stats.add_interval(Interval(items[0], items[1]))
+        stats = self._stats
+        stats.do_query_dur = timers.get(DO_QUERY)
+        stats.stream_to_file_dur = timers.get(STREAM_TO_FILE)
+        stats.query_total_dur = timers.get(QUERY_TOTAL)
+
+        if (val := timers.get(TAP_SUBMIT)) is not None:
+            stats.add_named_duration(TAP_SUBMIT, val)
+        if (val := timers.get(TAP_RUN)) is not None:
+            stats.add_named_duration(TAP_RUN, timers.get(TAP_RUN))
+        if (val := timers.get(TAP_WAIT)) is not None:
+            stats.add_named_duration(TAP_WAIT, timers.get(TAP_WAIT))
+        if (val := timers.get(TAP_RAISE_IF_ERROR)) is not None:
+            stats.add_named_duration(TAP_RAISE_IF_ERROR, timers.get(TAP_RAISE_IF_ERROR))
+        if (val := timers.get(TAP_FETCH_RESPONSE)) is not None:
+            stats.add_named_duration(TAP_FETCH_RESPONSE, timers.get(TAP_FETCH_RESPONSE))
+        if (val := timers.get(TAP_DELETE)) is not None:
+            stats.add_named_duration(TAP_DELETE, timers.get(TAP_DELETE))
 
         result_meta = dict.fromkeys(self._result_meta_attrs())
         result_meta['status'] = response.status_code

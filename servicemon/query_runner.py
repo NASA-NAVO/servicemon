@@ -168,16 +168,12 @@ class QueryRunner():
                 cones_run += 1
                 if cones_run > self._cone_limit:
                     break
-                try:
-                    query = Query(service, None, None, self._result_dir,
-                                  tap_mode=self._tap_mode,
-                                  agent=self._user_agent,
-                                  save_results=self._save_results,
-                                  verbose=self._verbose)
-                    query.run()
-                except Exception as e:
-                    msg = f'Query error for service {service}: {repr(e)}'
-                    query._handle_exc(msg)
+                query = Query(service, None, None, self._result_dir,
+                              tap_mode=self._tap_mode,
+                              agent=self._user_agent,
+                              save_results=self._save_results,
+                              verbose=self._verbose)
+                query.run()
                 try:
                     self._collect_stats(query.stats)
                 except Exception as e:
