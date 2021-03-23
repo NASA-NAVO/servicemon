@@ -35,7 +35,8 @@ class CsvResultWriter(AbstractResultWriter, plugin_name='csv_writer',
         if self._first_stat:
             self._first_stat = False
             writer.writeheader()
-        writer.writerow(stats.row_values())
+        row_values = stats.row_values()
+        writer.writerow(row_values)
 
     def _compute_outfile_path(self, args, outfile=None):
         """

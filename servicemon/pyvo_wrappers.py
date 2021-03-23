@@ -12,6 +12,9 @@ from pyvo.dal.exceptions import DALQueryError, DALServiceError
 from pyvo.utils.http import use_session
 from pyvo.io import uws
 
+from .timing_labels import (TAP_SUBMIT, TAP_RUN, TAP_WAIT, TAP_RAISE_IF_ERROR,
+                            TAP_FETCH_RESPONSE, TAP_DELETE)
+
 
 class TAPServiceSM(TAPService):
     """
@@ -106,28 +109,28 @@ class TAPServiceSM(TAPService):
         --------
         AsyncTAPJob
         """
-        with Timer('submit', logger=None):
+        with Timer(TAP_SUBMIT, logger=None):
             job = AsyncTAPSM.create(
                 self.baseurl, query, language, maxrec, uploads, self._session, **keywords)
 
-        with Timer('run', logger=None):
+        with Timer(TAP_RUN, logger=None):
             job = job.run()
 
-        with Timer('wait', logger=None):
+        with Timer(TAP_WAIT, logger=None):
             job = job.wait()
 
-        with Timer('raise_if_error', logger=None):
+        with Timer(TAP_RAISE_IF_ERROR, logger=None):
             if job._job.phase in {"ERROR", "ABORTED"}:
                 raise DALQueryError("Query Error", job._job.phase, job.url)
 
-        with Timer('fetch_response', logger=None):
+        with Timer(TAP_FETCH_RESPONSE, logger=None):
             if streamable_response:
                 result = job.get_result_response()
             else:
                 result = job.fetch_result()
 
         if delete:
-            with Timer('delete', logger=None):
+            with Timer(TAP_DELETE, logger=None):
                 job.delete()
 
         return result

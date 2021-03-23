@@ -1,5 +1,5 @@
 [
-    {'base_name': 'PanSTARRS',
+    {'base_name': 'STScI_PanSTARRS',
      'service_type': 'tap',
      'access_url': 'http://vao.stsci.edu/PS1DR2/tapservice.aspx',
      'adql':'''

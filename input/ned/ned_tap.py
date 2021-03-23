@@ -1,5 +1,5 @@
 [
-    {'base_name': 'NED',
+    {'base_name': 'NED_NED',
      'service_type': 'tap',
      'access_url': 'https://ned.ipac.caltech.edu/tap/',
      'adql':'''
