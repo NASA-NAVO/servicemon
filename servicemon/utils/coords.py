@@ -8,7 +8,6 @@ This adaptation is just to avoid a dependency on Astroquery.
 """
 
 import warnings
-import six
 import astropy.units as u
 from astropy import coordinates as coord
 
@@ -48,7 +47,7 @@ def parse_coordinates(coordinates):
     astropy.units.UnitsError
     TypeError
     """
-    if isinstance(coordinates, six.string_types):
+    if isinstance(coordinates, str):
         try:
             c = ICRSCoordGenerator(coordinates)
             warnings.warn("Coordinate string is being interpreted as an "
