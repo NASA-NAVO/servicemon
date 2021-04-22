@@ -5,7 +5,7 @@ servicemon
 ##########
 
 **servicemon** is a command line tool for measuring the timing of Virtual Observatory (VO) queries.
-The features are also available via a Python API.
+The features are also available via the :doc:`api`.
 
 Code and issue tracker are on `GitHub <https://github.com/NASA-NAVO/servicemon>`_.
 
@@ -212,13 +212,13 @@ services are assumed to return results as VOTables.
 
   .. literalinclude:: files/sia_service.py
     :caption: service_type 'xcone' can be used for an SIA service
-  
+
   * ``tap`` A Table Access Protocol (TAP) service.  The **adql** value is a template
     template for the TAP query to be performed.
 
   .. literalinclude:: files/great_archive_tap_service.py
     :caption: Sample TAP service.
-  
+
 * **access_url** - The access URL for the service.
 * **adql** - For the ``tap`` *service_type*, this is the ADQL query. For other types,
   this key must exist, but the value will be ignored. The ADQL query is assumed
@@ -328,8 +328,15 @@ command line, include it with the ``--writer`` value:
 .. literalinclude:: ../servicemon/builtin_plugins/csv_writer.py
   :language: python
 
+Developer documentation
+-----------------------
 
+The :doc:`analysis-api` is for use in finding and analyzing data already collected.
 
+.. toctree::
+   :maxdepth: 1
+
+   analysis-api.rst
 
 
 
