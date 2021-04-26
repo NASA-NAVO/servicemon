@@ -86,7 +86,7 @@ def create_plot_dur_v_start_time(source, y_axis_type='log', y_range=(0.001, 10**
 
     # create plot with a datetime axis type
     p = plotting.figure(plot_width=700, plot_height=500, x_axis_type="datetime",
-               y_axis_type=y_axis_type, y_range=y_range)
+                        y_axis_type=y_axis_type, y_range=y_range)
 
     hover = create_hover()
     p.add_tools(hover)
@@ -129,8 +129,8 @@ def create_plot_durations_v_nrows(source, x_axis_type='log', x_range=(1, 10**5),
     """
     # create a new plot with a datetime axis type
     p = plotting.figure(plot_width=500, plot_height=500,
-               x_axis_type=x_axis_type, x_range=x_range,
-               y_axis_type=y_axis_type, y_range=y_range)
+                        x_axis_type=x_axis_type, x_range=x_range,
+                        y_axis_type=y_axis_type, y_range=y_range)
 
     hover = create_hover()
     p.add_tools(hover)
@@ -266,8 +266,8 @@ def create_plot_location_shapes(source):
                ]
 
     p = plotting.figure(plot_width=500, plot_height=500,
-               x_axis_type='log', x_range=(0.001, 10**3),
-               y_axis_type='log', y_range=(1, 10**5))
+                        x_axis_type='log', x_range=(0.001, 10**3),
+                        y_axis_type='log', y_range=(1, 10**5))
     p.title.text = 'Duration v. # of Rows'
     p.xaxis.axis_label = 'Duration (s)'
     p.yaxis.axis_label = '# of Rows'
