@@ -6,8 +6,12 @@ Servicemon Analysis API
 
 Analysis support
 ----------------
-These classes are helpers for querying and analyzing collected data.
+These classes are helpers for querying and plotting collected data.
 
 .. automodapi:: servicemon.analysis.stat_queries
     :no-inheritance-diagram:
-    :inherited-members:
+    :no-inherited-members:
+
+.. automodapi:: servicemon.analysis.basic_plotting
+    :no-inheritance-diagram:
+    :no-inherited-members:

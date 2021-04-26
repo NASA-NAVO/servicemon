@@ -13,14 +13,16 @@ Code and issue tracker are on `GitHub <https://github.com/NASA-NAVO/servicemon>`
 Installation
 ************
 
-The latest version of **servicemon** requires Python 3.7 or higher and
+The latest version of **servicemon** requires Python 3.8 or higher and
 can be pip installed.  If an environment already has an older version of
 **servicemon** installed add ``--upgrade`` to make sure the latest version
 is installed.
 
+Be sure to use the ``--pre`` option since the latest version is a pre-release.
+
 .. code-block:: bash
 
-    $ pip install servicemon
+    $ pip install --pre servicemon
 
 ********
 Overview
