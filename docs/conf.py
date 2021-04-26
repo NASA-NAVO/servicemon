@@ -150,6 +150,8 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 # -- Enable inserting command output into docs ---------------------------------
 
 extensions += ['sphinxcontrib.programoutput']
+extensions += ['sphinx_automodapi.smart_resolver']
+extensions += ['sphinx_automodapi.automodapi']
 
 # -- Options for the edit_on_github extension ---------------------------------
 
