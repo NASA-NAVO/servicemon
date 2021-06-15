@@ -1,15 +1,17 @@
 import re
+import itertools
+
 import bokeh.plotting as plotting
 from bokeh.models import Legend, ColumnDataSource, HoverTool, Div
 import bokeh.transform as transform
-import bokeh.layouts as layouts
-from bokeh.palettes import Spectral6
 from bokeh.transform import factor_cmap
+import bokeh.layouts as layouts
+from bokeh.palettes import Spectral6, Spectral11
 
 import pandas as pd
 
 
-def create_source(data):
+def create_data_frame(data):
     """
     Create a Bokeh ColumnDataSource from an Astropy Table containing results from
     a navostats query.
@@ -24,8 +26,8 @@ def create_source(data):
 
     Returns
     -------
-    ColumnDataSource, `~pandas.core.frame.DataFrame`
-        A Bokeh data source suitable for plotting and the Pandas data frame from which it was created.
+    `~pandas.core.frame.DataFrame`
+        A Pandas data frame suitable for plotting most quantities.
     """
     # Masked values in integer columns show up as <NA> when exported to Pandas.
     # Such values seem to cause weird errors when displayed in bokeh, even when those rows
@@ -34,15 +36,21 @@ def create_source(data):
     data["num_rows"] = data["num_rows"].astype(float)
     data["size"] = data["size"].astype(float)
 
+    # This one gives us one value for the whole day which is something we can group on.
+    data['datestr'] = data['start_time'].astype('U10')
+
     # Create the Pandas DataFrame, with start time officially being a datetime.
-    df = data["location", "start_time", "do_query_dur", "stream_to_file_dur", "size", "num_rows",
-              "base_name", "service_type", "ra", "dec", "sr"].to_pandas().copy()
+    df = data["location", "start_time", "datestr", "do_query_dur", "query_total_dur", "stream_to_file_dur",
+              "size", "num_rows", "base_name", "service_type", "ra", "dec", "sr"].to_pandas().copy()
     df["dt_start_time"] = pd.to_datetime(df["start_time"], format='%Y-%m-%d %H:%M:%S.%f')
 
-    # Create the bokeh data source from the data frame.
-    source = ColumnDataSource(df)
+    # A datetime version of the date rounded to a whole day.
+    df["date"] = pd.to_datetime(df["datestr"], format='%Y-%m-%d')
 
-    return source, df
+    # Data volume (bytes per query second)
+    df['rate'] = df['size'] / df['query_total_dur']
+
+    return df
 
 
 def create_hover():
@@ -260,14 +268,73 @@ def create_service_plots(stat_queries, services, start_time=None, end_time=None,
     -------
     None
     """
-    bk_layout, _ = generate_service_plots(stat_queries, services, start_time, end_time)
     plotting.reset_output()
+
+    layout_children, _ = generate_service_plots(stat_queries, services, start_time, end_time)
+    bk_layout = layouts.layout(children=layout_children)
+
     if htmlfile is None:
         plotting.output_notebook()
         plotting.show(bk_layout)
     else:
         plotting.output_file(htmlfile, title=title)
         plotting.save(bk_layout)
+
+
+def generate_summary_plots(stat_queries, services, start_time, end_time):
+    """
+
+    Parameters
+    ----------
+    stat_queries : servicemon.analysis.stat_queriesStatQueries
+        A StatQueries object which will perform the navostats queries.
+    services : List of tuples
+        Each tuple should be a doubleton indicating a (base_name, service_type)
+        that should be queried and plotted.
+    start_time : str
+        The beginning of a time window bounding the query.  Format is '%Y-%m-%d %H:%M:%S.%f'.
+        Least significant part can be omitted as the comparisons done are just alphabetic.
+    end_time : str
+        The end of a time window bounding the query.  Format is '%Y-%m-%d %H:%M:%S.%f'.
+        Least significant part can be omitted as the comparisons done are just alphabetic.
+
+    Returns
+    -------
+    list of lists, list of dicts
+        list of layout children rows, each of which is a list of plots or divs
+        and list of "id" and "title" dicts for populating a TOC
+    """
+
+    # Build the layout.
+    layout_children = []
+    rows_toc = []
+
+    data = stat_queries.do_stat_query(start_time=start_time, end_time=end_time)
+    df = create_data_frame(data)
+
+    # Make one group df per service/service_type pair.
+    date_groups = []
+    for s in services:
+        service_df = df[df['base_name'] == s[0]]
+        service_and_type_df = service_df[service_df['service_type'] == s[1]]
+        g = service_and_type_df.groupby('date')
+        date_groups.append(g)
+
+    # Build naming and ToC.
+    row_title = f'Summary Plots from {start_time[:10]} to {end_time[:10]}'
+    row_label = {
+        "id": re.sub('\\s+', '_', row_title),
+        "title": row_title
+    }
+    rows_toc.append(row_label)
+
+    daily_duration_line_plot = create_daily_duration_line_plot(date_groups, services)
+    daily_rate_line_plot = create_daily_rate_line_plot(date_groups, services)
+
+    layout_children.append([Div(text='<hr><h1 style="min-width:800px" id="{id}">{title}</h1>'.format(**row_label))])
+    layout_children.append([daily_duration_line_plot, daily_rate_line_plot])
+
+    return layout_children, rows_toc
 
 
 def generate_service_plots(stat_queries, services, start_time, end_time):
@@ -292,7 +359,9 @@ def generate_service_plots(stat_queries, services, start_time, end_time):
 
     Returns
     -------
-    `~bokeh.layouts.layout`, List of dicts
+    list of lists, list of dicts
+        list of layout children rows, each of which is a list of plots or divs
+        and list of "id" and "title" dicts for populating a TOC
     """
 
     # Build the layout.
@@ -312,7 +381,8 @@ def generate_service_plots(stat_queries, services, start_time, end_time):
 
         data = stat_queries.do_stat_query(base_name=base_name, service_type=service_type,
                                           start_time=start_time, end_time=end_time)
-        source, df = create_source(data)
+        df = create_data_frame(data)
+        source = ColumnDataSource(df)
 
         locations = get_locations(df)
         over_time_plot = create_plot_dur_v_start_time(source, locations)
@@ -321,9 +391,75 @@ def generate_service_plots(stat_queries, services, start_time, end_time):
         layout_children.append([Div(text='<hr><h1 style="min-width:800px" id="{id}">{title}</h1>'.format(**row_label))])
         layout_children.append([over_time_plot, time_v_nrows_plot])
 
-    bk_layout = layouts.layout(children=layout_children)
+    return layout_children, rows_toc
 
-    return bk_layout, rows_toc
+
+def create_daily_rate_line_plot(sources, services, y_axis_type='log', y_range=(1, 10**7)):
+    """
+
+
+    Returns
+    -------
+    plotting.figure
+        A Bokeh plot that can be shown.
+    """
+
+    # create plot with a datetime axis type
+    p = plotting.figure(plot_width=700, plot_height=1200, x_axis_type="datetime",
+                        y_axis_type=y_axis_type, y_range=y_range)
+
+    line_dashes = ['solid'] * 11
+    line_dashes.extend(['dashed'] * 11)
+    line_dashes.extend(['dotted'] * 11)
+    for source, service, color, line_dash in zip(sources, services,
+                                                 itertools.cycle(Spectral11), line_dashes):
+        legend_label = f'{service[0]} {service[1]}'
+        p.line(x='date', y='rate_mean', line_width=2, source=source, color=color,
+               legend_label=legend_label, line_dash=line_dash)
+
+    p.legend.click_policy = "hide"
+
+    p.title.text = "Mean Daily Bytes per Second v. Start Time"
+    p.xaxis.axis_label = 'Start Time'
+    p.yaxis.axis_label = 'Mean Bytes per Second (s)'
+
+    p.legend.location = (0, 0)
+    p.add_layout(p.legend[0], 'below')
+
+    return p
+
+
+def create_daily_duration_line_plot(sources, services, y_axis_type='log', y_range=(0.1, 1000)):
+    """
+    Returns
+    -------
+    plotting.figure
+        A Bokeh plot that can be shown.
+    """
+
+    # create plot with a datetime axis type
+    p = plotting.figure(plot_width=700, plot_height=1200, x_axis_type="datetime",
+                        y_axis_type=y_axis_type, y_range=y_range)
+
+    line_dashes = ['solid'] * 11
+    line_dashes.extend(['dashed'] * 11)
+    line_dashes.extend(['dotted'] * 11)
+    for source, service, color, line_dash in zip(sources, services,
+                                                 itertools.cycle(Spectral11), line_dashes):
+        legend_label = f'{service[0]} {service[1]}'
+        p.line(x='date', y='query_total_dur_mean', line_width=2, source=source, color=color,
+               legend_label=legend_label, line_dash=line_dash)
+
+    p.legend.click_policy = "hide"
+
+    p.title.text = "Mean Daily Query Duration v. Start Time"
+    p.xaxis.axis_label = 'Start Time'
+    p.yaxis.axis_label = 'Mean Query Duration (s)'
+
+    p.legend.location = (0, 0)
+    p.add_layout(p.legend[0], 'below')
+
+    return p
 
 
 def create_plot_location_shapes(source):

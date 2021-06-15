@@ -1,10 +1,11 @@
 import os
 from datetime import datetime, timedelta
 from bokeh.embed import components
+import bokeh.layouts as layouts
 import jinja2
 from argparse import ArgumentParser
 
-from .basic_plotting import generate_service_plots
+from .basic_plotting import generate_service_plots, generate_summary_plots
 from .stat_queries import StatQueries
 
 
@@ -112,8 +113,21 @@ def create_service_plots_page(stat_queries, services, start_time,
     os.makedirs(stat_page_path, exist_ok=True)
     htmlfile = f'{stat_page_path}/{start_time}.html'
 
+    # Get the layout children and toc items for the service plots.
+    min_time = '2021-04-05'
+    _, summary_start_time = with_delta(end_time, delta=timedelta(days=-35))
+    if summary_start_time < min_time:
+        summary_start_time = min_time
+    layout_children, rows_toc = generate_summary_plots(stat_queries, services, summary_start_time, end_time)
+
+    # Get the layout children and toc items for the service plots.
+    service_layout_children, service_rows_toc = generate_service_plots(stat_queries, services, start_time, end_time)
+
+    layout_children.extend(service_layout_children)
+    rows_toc.extend(service_rows_toc)
+
     # Build the layout.
-    bk_layout, rows_toc = generate_service_plots(stat_queries, services, start_time, end_time)
+    bk_layout = layouts.layout(children=layout_children)
 
     # Build the template and render the layout content.
     script, div = components(bk_layout)
@@ -124,6 +138,37 @@ def create_service_plots_page(stat_queries, services, start_time,
     # Write out the file.
     with open(htmlfile, 'w') as f:
         f.write(html)
+
+
+def with_delta(t, delta):
+    """
+    Return the datetime and time string for a time that is delta different than t.
+
+    Parameters
+    ----------
+    t : str or datetime
+        Base time as an iso time string or datetime object
+    delta : timedelta
+        Amount of time to add to t.  E.g., ``delta=timedelta(days=7)``
+
+
+    Returns
+    -------
+    (datetime, str)
+        The time resulting from t + delta as both datetime and str
+    """
+    if not isinstance(delta, timedelta):
+        raise ValueError('delta must be a timedelta object.')
+
+    # Ensure t_dt is a datetime
+    t_dt = t
+    if not isinstance(t, datetime):
+        t_dt = datetime.fromisoformat(t)
+
+    result_dt = t_dt + delta
+    result_str = datetime.strftime(result_dt, '%Y-%m-%d %H:%M:%S.%f')
+
+    return result_dt, result_str
 
 
 def _compute_start_of_week(date_to_include=None):
@@ -146,7 +191,7 @@ def _build_top_body(title, rows_toc):
     top_body = f'''
     <h1>{title}</h1>
     <div id="toc_container">
-    <p class="toc_title">Services</p>
+    <p class="toc_title">Plots</p>
     <ul class="toc_list">
     '''
     for row in rows_toc:
