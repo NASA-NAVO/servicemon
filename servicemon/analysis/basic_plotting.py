@@ -3,6 +3,8 @@ import bokeh.plotting as plotting
 from bokeh.models import Legend, ColumnDataSource, HoverTool, Div
 import bokeh.transform as transform
 import bokeh.layouts as layouts
+from bokeh.palettes import Spectral6
+from bokeh.transform import factor_cmap
 
 import pandas as pd
 
@@ -64,7 +66,30 @@ def create_hover():
     return hover
 
 
-def create_plot_dur_v_start_time(source, y_axis_type='log', y_range=(0.001, 10**3)):
+def get_locations(data):
+    """
+    Get the list of all locations present in the data source.
+
+    Parameters
+    ----------
+    data : `~astropy.table.table.Table`
+        Astropy data table containing the navostats data
+
+    Returns
+    -------
+    list of str
+        Sorted unique location values present in the data.
+    """
+    # Pandas data frame
+    df = data["location", "start_time", "do_query_dur", "stream_to_file_dur", "num_rows", "base_name",
+              "service_type", "ra", "dec", "sr"].to_pandas().copy()
+    dfg = df.groupby(['location'])
+    locations = list(dfg.groups)
+    locations.sort()
+    return locations
+
+
+def create_plot_dur_v_start_time(source, locations, y_axis_type='log', y_range=(0.001, 10**3)):
     """
     Create a Bokeh plot (Figure) of do_query_dur versus start_time.
 
@@ -72,6 +97,8 @@ def create_plot_dur_v_start_time(source, y_axis_type='log', y_range=(0.001, 10**
     ----------
     source : ColumnDataSource
         Bokeh data source containing the navostats data
+    locations : list of str
+        List of unique location values in the data source.
     y_axis_type : str
         auto, linear, log, datetime, or mercator
     y_range : tuple (min, max)
@@ -91,12 +118,17 @@ def create_plot_dur_v_start_time(source, y_axis_type='log', y_range=(0.001, 10**
     hover = create_hover()
     p.add_tools(hover)
 
+    index_cmap = factor_cmap('location', palette=Spectral6, factors=locations, end=1)
+
     # add renderers
-    p.circle(x="dt_start_time", y="do_query_dur", source=source, size=4, color='red', alpha=0.2)
+    p.circle(x="dt_start_time", y="do_query_dur", source=source, size=4, color=index_cmap, alpha=0.5,
+             legend_group="location")
 
     p.title.text = "Query Duration v. Start Time"
     p.xaxis.axis_label = 'Start Time'
     p.yaxis.axis_label = 'Duration (s)'
+    p.legend.location = (0, 0)
+    p.add_layout(p.legend[0], 'below')
 
     return p
 
@@ -232,7 +264,8 @@ def generate_service_plots(stat_queries, services, start_time, end_time):
                                           start_time=start_time, end_time=end_time)
         source = create_source(data)
 
-        over_time_plot = create_plot_dur_v_start_time(source)
+        locations = get_locations(data)
+        over_time_plot = create_plot_dur_v_start_time(source, locations)
         time_v_nrows_plot = create_plot_durations_v_nrows(source)
 
         layout_children.append([Div(text='<hr><h1 style="min-width:800px" id="{id}">{title}</h1>'.format(**row_label))])
