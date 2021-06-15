@@ -24,24 +24,25 @@ def create_source(data):
 
     Returns
     -------
-    ColumnDataSource
-        A Bokeh data source suitable for plotting
+    ColumnDataSource, `~pandas.core.frame.DataFrame`
+        A Bokeh data source suitable for plotting and the Pandas data frame from which it was created.
     """
     # Masked values in integer columns show up as <NA> when exported to Pandas.
     # Such values seem to cause weird errors when displayed in bokeh, even when those rows
     # are filtered out with dropna().  So convert the column to float, which results
     # in masked values being NaN (np.nan) which are smoothly ignored by bokeh.
     data["num_rows"] = data["num_rows"].astype(float)
+    data["size"] = data["size"].astype(float)
 
     # Create the Pandas DataFrame, with start time officially being a datetime.
-    df = data["location", "start_time", "do_query_dur", "stream_to_file_dur", "num_rows", "base_name", "service_type",
-              "ra", "dec", "sr"].to_pandas().copy()
+    df = data["location", "start_time", "do_query_dur", "stream_to_file_dur", "size", "num_rows",
+              "base_name", "service_type", "ra", "dec", "sr"].to_pandas().copy()
     df["dt_start_time"] = pd.to_datetime(df["start_time"], format='%Y-%m-%d %H:%M:%S.%f')
 
     # Create the bokeh data source from the data frame.
     source = ColumnDataSource(df)
 
-    return source
+    return source, df
 
 
 def create_hover():
@@ -56,6 +57,7 @@ def create_hover():
             ("Cone", "@ra, @dec, @sr"),
             ("Query Time", "@do_query_dur"),
             ("Download Time", "@stream_to_file_dur"),
+            ("Download Size", "@size"),
             ("# of Rows", "@num_rows"),
             ("Location", "@location"),
             ("Start Time", "@dt_start_time{%m/%d %H:%M:%S}")
@@ -66,13 +68,13 @@ def create_hover():
     return hover
 
 
-def get_locations(data):
+def get_locations(df):
     """
     Get the list of all locations present in the data source.
 
     Parameters
     ----------
-    data : `~astropy.table.table.Table`
+    df : `~pandas.core.frame.DataFrame`
         Astropy data table containing the navostats data
 
     Returns
@@ -80,9 +82,6 @@ def get_locations(data):
     list of str
         Sorted unique location values present in the data.
     """
-    # Pandas data frame
-    df = data["location", "start_time", "do_query_dur", "stream_to_file_dur", "num_rows", "base_name",
-              "service_type", "ra", "dec", "sr"].to_pandas().copy()
     dfg = df.groupby(['location'])
     locations = list(dfg.groups)
     locations.sort()
@@ -184,6 +183,57 @@ def create_plot_durations_v_nrows(source, x_axis_type='log', x_range=(1, 10**5),
     return p
 
 
+def create_plot_durations_v_size(source, x_axis_type='log', x_range=(100, 10**9),
+                                 y_axis_type='log', y_range=(0.0001, 10**3)):
+    """
+    Create a Bokeh plot (Figure) of do_query_dur and stream_to_file_dur versus download size.
+    num_rows is the number of result rows from the query.
+
+    Parameters
+    ----------
+    source : ColumnDataSource
+        Bokeh data source containing the navostats data
+    x_axis_type : str
+        auto, linear, log, datetime, or mercator
+    x_range : tuple (min, max)
+        The range of values to display on the x axis.  When x_axis_type is 'log',
+        it helps if the endpoints are exact powers of 10.
+    y_axis_type : str
+        auto, linear, log, datetime, or mercator
+    y_range : tuple (min, max)
+        The range of values to display on the y axis.  When y_axis_type is 'log',
+        it helps if the endpoints are exact powers of 10.
+
+    Returns
+    -------
+    plotting.figure
+        A Bokeh plot that can be shown.
+    """
+    # create a new plot with a datetime axis type
+    p = plotting.figure(plot_width=500, plot_height=500,
+                        x_axis_type=x_axis_type, x_range=x_range,
+                        y_axis_type=y_axis_type, y_range=y_range)
+
+    hover = create_hover()
+    p.add_tools(hover)
+
+    # add renderers
+    qt_rend = p.circle(x="size", y="do_query_dur", source=source, size=4, color='red', alpha=0.2)
+    dt_rend = p.circle(x="size", y="stream_to_file_dur", source=source, size=4, color='green', alpha=0.2)
+
+    legend = Legend(items=[
+        ("Query Duration",   [qt_rend]),
+        ("Download Duration", [dt_rend])
+    ], location=(0, 0), click_policy='hide')
+    p.add_layout(legend, 'below')
+
+    p.title.text = 'Query and Download Durations v. Download Size'
+    p.xaxis.axis_label = 'Response size (bytes)'
+    p.yaxis.axis_label = 'Durations (s)'
+
+    return p
+
+
 def create_service_plots(stat_queries, services, start_time=None, end_time=None, htmlfile=None, title=None):
     """    Create a Bokeh plot (Figure) of do_query_dur and stream_to_file_dur versus num_rows.
     num_rows is the number of result rows from the query.
@@ -262,11 +312,11 @@ def generate_service_plots(stat_queries, services, start_time, end_time):
 
         data = stat_queries.do_stat_query(base_name=base_name, service_type=service_type,
                                           start_time=start_time, end_time=end_time)
-        source = create_source(data)
+        source, df = create_source(data)
 
-        locations = get_locations(data)
+        locations = get_locations(df)
         over_time_plot = create_plot_dur_v_start_time(source, locations)
-        time_v_nrows_plot = create_plot_durations_v_nrows(source)
+        time_v_nrows_plot = create_plot_durations_v_size(source)
 
         layout_children.append([Div(text='<hr><h1 style="min-width:800px" id="{id}">{title}</h1>'.format(**row_label))])
         layout_children.append([over_time_plot, time_v_nrows_plot])
