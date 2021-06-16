@@ -178,14 +178,16 @@ def create_service_plots(stat_queries, services, start_time=None, end_time=None,
     -------
     None
     """
+    bk_layout, _ = generate_service_plots(stat_queries, services, start_time, end_time)
     plotting.reset_output()
     if htmlfile is None:
         plotting.output_notebook()
+        plotting.show(bk_layout)
+
     else:
         plotting.output_file(htmlfile, title=title)
+        plotting.save(bk_layout)
 
-    bk_layout, _ = generate_service_plots(stat_queries, services, start_time, end_time)
-    plotting.show(bk_layout)
 
 
 def generate_service_plots(stat_queries, services, start_time, end_time):
