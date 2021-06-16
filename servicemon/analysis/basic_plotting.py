@@ -183,7 +183,6 @@ def create_service_plots(stat_queries, services, start_time=None, end_time=None,
     if htmlfile is None:
         plotting.output_notebook()
         plotting.show(bk_layout)
-
     else:
         plotting.output_file(htmlfile, title=title)
         plotting.save(bk_layout)
