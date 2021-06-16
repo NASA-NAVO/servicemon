@@ -188,7 +188,6 @@ def create_service_plots(stat_queries, services, start_time=None, end_time=None,
         plotting.save(bk_layout)
 
 
-
 def generate_service_plots(stat_queries, services, start_time, end_time):
     """    Create a Bokeh plot (Figure) of do_query_dur and stream_to_file_dur versus num_rows
     for each row, put the plot rows into a bokeh layout with title divs for each row, then
