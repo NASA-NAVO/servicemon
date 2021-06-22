@@ -4,7 +4,6 @@ import itertools
 import bokeh.plotting as plotting
 from bokeh.models import Legend, ColumnDataSource, HoverTool, Div
 import bokeh.transform as transform
-from bokeh.transform import factor_cmap
 import bokeh.layouts as layouts
 from bokeh.palettes import Spectral6, Spectral11
 
@@ -125,7 +124,7 @@ def create_plot_dur_v_start_time(source, locations, y_axis_type='log', y_range=(
     hover = create_hover()
     p.add_tools(hover)
 
-    index_cmap = factor_cmap('location', palette=Spectral6, factors=locations, end=1)
+    index_cmap = transform.factor_cmap('location', palette=Spectral6, factors=locations, end=1)
 
     # add renderers
     p.circle(x="dt_start_time", y="do_query_dur", source=source, size=4, color=index_cmap, alpha=0.5,
