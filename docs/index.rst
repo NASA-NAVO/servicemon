@@ -5,7 +5,7 @@ servicemon
 ##########
 
 **servicemon** is a command line tool for measuring the timing of Virtual Observatory (VO) queries.
-The features are also available via the :doc:`api`.
+The features are also available via the :doc:`servicemon-api`.
 
 Code and issue tracker are on `GitHub <https://github.com/NASA-NAVO/servicemon>`_.
 
